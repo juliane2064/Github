@@ -44,7 +44,7 @@
 		<key>session</key>
 		<dict>
 			<key>connectionEncoding</key>
-			<string>utf8</string>
+			<string>latin1</string>
 			<key>contentPageNumber</key>
 			<integer>1</integer>
 			<key>contentSelection</key>
@@ -64,7 +64,7 @@
 			<key>contentSortColIsAsc</key>
 			<true/>
 			<key>contentViewport</key>
-			<string>{{0, 0}, {694, 450}}</string>
+			<string>{{0, 0}, {1022, 497}}</string>
 			<key>isToolbarVisible</key>
 			<true/>
 			<key>queries</key>
@@ -73,12 +73,34 @@
 	email_date DATE NOT NULL,
 	position INTEGER NOT NULL,
 	sku_prefix VARCHAR(128) NOT NULL,
-	grommet VARCHAR(128) NOT NULL,
+	grommet_name VARCHAR(128) NOT NULL,
 	spot VARCHAR(128),
 	content_direction VARCHAR(128), 
 	high_level_campaign VARCHAR(128),
-	promotional_pricing VARCHAR(128)
-	);</string>
+	promotional_pricing VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	);
+
+LOAD DATA LOCAL INFILE '/Users/juliane/Documents/.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	grommet_name,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)
+
+;
+
+drop table calendar_test;</string>
 			<key>view</key>
 			<string>SP_VIEW_CUSTOMQUERY</string>
 			<key>windowVerticalDividerPosition</key>
@@ -90,9 +112,62 @@
 	<key>format</key>
 	<string>connection</string>
 	<key>queryFavorites</key>
-	<array/>
+	<array>
+		<dict>
+			<key>name</key>
+			<string>Create Calendar Table</string>
+			<key>query</key>
+			<string>CREATE TABLE IF NOT EXISTS calendar_test (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	grommet_name VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	);
+
+LOAD DATA LOCAL INFILE '/Users/juliane/Documents/.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	grommet_name,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)
+
+;
+
+drop table calendar_test;</string>
+		</dict>
+	</array>
 	<key>queryHistory</key>
 	<array>
+		<string>CREATE TABLE IF NOT EXISTS calendar_test (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	grommet VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>drop table calendar_test</string>
 		<string>CREATE TABLE IF NOT EXISTS calendar_test (
 	email_num INTEGER NOT NULL,
 	email_date DATE NOT NULL,
@@ -1587,28 +1662,6 @@ OR			f.severity IS NULL)
 AND			DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) BETWEEN '2016-03-01' AND '2016-12-31'
 GROUP BY 	o.increment_id, sf.sku
 ORDER BY 	customer_id ASC</string>
-		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
-       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
-       base_price,
-       COUNT(DISTINCT order_id) as orders,
-       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
-       sum(base_price * qty_ordered) as revenue
-FROM   sales_flat_order_item
-WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%traction%'
-AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-22'
-AND    store_id = 1
-GROUP BY date</string>
-		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
-       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
-       base_price,
-       COUNT(DISTINCT order_id) as orders,
-       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
-       sum(base_price * qty_ordered) as revenue
-FROM   sales_flat_order_item
-WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%rem-fit%'
-AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-21'
-AND    store_id = 1
-GROUP BY date</string>
 	</array>
 	<key>rdbms_type</key>
 	<string>mysql</string>
