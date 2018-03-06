@@ -10,8 +10,6 @@
 	<dict>
 		<key>connection</key>
 		<dict>
-			<key>database</key>
-			<string>bi-test</string>
 			<key>host</key>
 			<string>datashack.production.thegrommet.com</string>
 			<key>kcid</key>
@@ -64,7 +62,7 @@
 			<key>contentSortColIsAsc</key>
 			<true/>
 			<key>contentViewport</key>
-			<string>{{0, 0}, {1022, 497}}</string>
+			<string>{{0, 0}, {694, 450}}</string>
 			<key>isToolbarVisible</key>
 			<true/>
 			<key>queries</key>
