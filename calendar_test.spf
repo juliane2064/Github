@@ -1,0 +1,1620 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ContentFilters</key>
+	<dict/>
+	<key>auto_connect</key>
+	<true/>
+	<key>data</key>
+	<dict>
+		<key>connection</key>
+		<dict>
+			<key>database</key>
+			<string>bi-test</string>
+			<key>host</key>
+			<string>datashack.production.thegrommet.com</string>
+			<key>kcid</key>
+			<string>-6998448571925772934</string>
+			<key>name</key>
+			<string>Datashaq</string>
+			<key>port</key>
+			<integer>3306</integer>
+			<key>rdbms_type</key>
+			<string>mysql</string>
+			<key>sslCACertFileLocation</key>
+			<string></string>
+			<key>sslCACertFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslCertificateFileLocation</key>
+			<string></string>
+			<key>sslCertificateFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslKeyFileLocation</key>
+			<string></string>
+			<key>sslKeyFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>type</key>
+			<string>SPTCPIPConnection</string>
+			<key>useSSL</key>
+			<integer>0</integer>
+			<key>user</key>
+			<string>juliane</string>
+		</dict>
+		<key>session</key>
+		<dict>
+			<key>connectionEncoding</key>
+			<string>utf8</string>
+			<key>contentPageNumber</key>
+			<integer>1</integer>
+			<key>contentSelection</key>
+			<data>
+			YnBsaXN0MDDUAQIDBAUGJCVYJHZlcnNpb25YJG9iamVjdHNZJGFy
+			Y2hpdmVyVCR0b3ASAAGGoKgHCBMUFRYaIVUkbnVsbNMJCgsMDxJX
+			TlMua2V5c1pOUy5vYmplY3RzViRjbGFzc6INDoACgAOiEBGABIAF
+			gAdUdHlwZVRyb3dzXxAdU2VsZWN0aW9uRGV0YWlsVHlwZU5TSW5k
+			ZXhTZXTSFwsYGVxOU1JhbmdlQ291bnQQAIAG0hscHR5aJGNsYXNz
+			bmFtZVgkY2xhc3Nlc1pOU0luZGV4U2V0oh8gWk5TSW5kZXhTZXRY
+			TlNPYmplY3TSGxwiI1xOU0RpY3Rpb25hcnmiIiBfEA9OU0tleWVk
+			QXJjaGl2ZXLRJidUZGF0YYABAAgAEQAaACMALQAyADcAQABGAE0A
+			VQBgAGcAagBsAG4AcQBzAHUAdwB8AIEAoQCmALMAtQC3ALwAxwDQ
+			ANsA3gDpAPIA9wEEAQcBGQEcASEAAAAAAAACAQAAAAAAAAAoAAAA
+			AAAAAAAAAAAAAAABIw==
+			</data>
+			<key>contentSortColIsAsc</key>
+			<true/>
+			<key>contentViewport</key>
+			<string>{{0, 0}, {694, 450}}</string>
+			<key>isToolbarVisible</key>
+			<true/>
+			<key>queries</key>
+			<string>CREATE TABLE IF NOT EXISTS calendar_test (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	grommet VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128)
+	);</string>
+			<key>view</key>
+			<string>SP_VIEW_CUSTOMQUERY</string>
+			<key>windowVerticalDividerPosition</key>
+			<real>258</real>
+		</dict>
+	</dict>
+	<key>encrypted</key>
+	<false/>
+	<key>format</key>
+	<string>connection</string>
+	<key>queryFavorites</key>
+	<array/>
+	<key>queryHistory</key>
+	<array>
+		<string>CREATE TABLE IF NOT EXISTS calendar_test (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	grommet VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128)
+	)</string>
+		<string>#LTV Query
+Select 		LEFT(first_purchase_month,7) as customer_cohort,
+			LEFT(as_of_month, 7) as order_date,
+			COUNT(DISTINCT customer_email) as customers_ordering,
+			sum(month_order_count) as order_count,
+			sum(month_product_revenue + month_shipping_revenue) * .97 as revenue,
+			PERIOD_DIFF( EXTRACT(YEAR_MONTH FROM as_of_month), EXTRACT(YEAR_MONTH FROM first_purchase_month)) + 1 AS months_since_first_purchase
+FROM 		customer_month_active
+Where 		active_inactive = 'active'
+AND			months_since_last_purchase = 0
+Group by 	customer_cohort, order_date
+Order by 	customer_cohort, order_date</string>
+		<string>#LTV Query
+Select 		LEFT(first_purchase_month,7) as customer_cohort,
+			LEFT(as_of_month, 7) as order_date,
+			COUNT(DISTINCT customer_email) as customers_ordering,
+			sum(month_order_count) as order_count,
+			sum(month_product_revenue,month_shipping_revenue) * .97 as revenue,
+			PERIOD_DIFF( EXTRACT(YEAR_MONTH FROM as_of_month), EXTRACT(YEAR_MONTH FROM first_purchase_month)) + 1 AS months_since_first_purchase
+FROM 		customer_month_active
+Where 		active_inactive = 'active'
+AND			months_since_last_purchase = 0
+Group by 	customer_cohort, order_date
+Order by 	customer_cohort, order_date</string>
+		<string>#LTV Query
+Select 		LEFT(first_purchase_month,7) as customer_cohort,
+			LEFT(as_of_month, 7) as order_date,
+			COUNT(DISTINCT customer_email) as customers_ordering,
+			sum(month_order_count) as order_count,
+			sum(month_product_revenue) * .97 as product_revenue,
+			SUM(month_shipping_revenue) as shipping_revenue,
+			PERIOD_DIFF( EXTRACT(YEAR_MONTH FROM as_of_month), EXTRACT(YEAR_MONTH FROM first_purchase_month)) + 1 AS months_since_first_purchase
+FROM 		customer_month_active
+Where 		active_inactive = 'active'
+AND			months_since_last_purchase = 0
+Group by 	customer_cohort, order_date
+Order by 	customer_cohort, order_date</string>
+		<string>#LTV Query
+Select 		LEFT(first_purchase_month,7) as customer_cohort,
+			LEFT(as_of_month, 7) as order_date,
+			COUNT(DISTINCT customer_email) as customers_ordering,
+			sum(month_order_count) as order_count,
+			sum(month_product_revenue) * .97 as product_revenue,
+			SUM(month_shipping_revenue) as shipping_revenue,
+			PERIOD_DIFF( EXTRACT(YEAR_MONTH FROM as_of_month), EXTRACT(YEAR_MONTH FROM first_purchase_month)) + 1 AS months_since_first_purchase
+FROM 		customer_month_active
+Where 		DATE(as_of_month) &lt; '2018-03'
+AND			active_inactive = 'active'
+AND			months_since_last_purchase = 0
+Group by 	customer_cohort, order_date
+Order by 	customer_cohort, order_date</string>
+		<string>#to test
+SELECT 		month(o.created_at) as month,
+			COUNT(DISTINCT o.entity_id) as free_ship_orders
+FROM   		sales_flat_order o 
+LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = o.entity_id
+WHERE   	DATE(convert_tz(o.created_at,'UTC','America/New_York')) BEtWEEN '2017-01-01' AND '2017-12-31'
+AND			o.status != 'canceled'
+AND 		o.store_id = 1
+AND 		(f.severity !=9 or f.severity is null) -- with no null there are 1,927,273;  with (f.severity !=9 OR f.severity is null) there are 2,682,540
+           --	AND DATE_FORMAT(CONVERT_TZ(o.created_at,'UTC','America/New_York'), '%Y-%m-%d') between '2015-01-01' AND '2017-01-31'
+AND			o.base_shipping_amount = 0
+GROUP by	month</string>
+		<string>#to test
+SELECT 		month(o.created_at) as month,
+			COUNT(DISTINCT o.entity_id) as free_ship_orders,
+FROM   		sales_flat_order o 
+LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = o.entity_id
+WHERE   	DATE(convert_tz(o.created_at,'UTC','America/New_York')) BEtWEEN '2017-01-01' AND '2017-12-31'
+AND			o.status != 'canceled'
+AND 		o.store_id = 1
+AND 		(f.severity !=9 or f.severity is null) -- with no null there are 1,927,273;  with (f.severity !=9 OR f.severity is null) there are 2,682,540
+           --	AND DATE_FORMAT(CONVERT_TZ(o.created_at,'UTC','America/New_York'), '%Y-%m-%d') between '2015-01-01' AND '2017-01-31'
+AND			o.base_shipping_amount = 0
+GROUP by	month</string>
+		<string>#to test
+SELECT 
+      		o.entity_id,
+      		o.increment_id,
+      		DATE_FORMAT(CONVERT_TZ(o.created_at,'UTC','America/New_York'), '%Y-%m-%d') as order_date,
+      		COALESCE(o.customer_email,'INVALID EMAIL') customer_email,
+      		COALESCE(o.base_total_invoiced, 0) AS base_total_invoiced,
+      		COALESCE(o.base_subtotal, 0) AS base_subtotal,
+			COALESCE(o.base_discount_amount, 0) as base_discount,
+			COALESCE(o.base_gift_cards_amount, 0) as base_giftcard,
+      		COALESCE(o.base_total_invoiced_cost, 0) as cogs,
+      		COALESCE(o.base_shipping_amount, 0) as shipping_rev, -- JN Note: charged to customer
+      		COALESCE(o.total_qty_ordered, 0) as qty, -- need to check
+        	SUM(IFNULL(IF(s.total_cost &gt; 100000, 0, s.total_cost), 0)) AS shipping_cost, -- No really, we have total_cost = 99999999.9999 in there, also need to check to see if this table will duplicate - may need a sub query, JN Note: charged to grommet
+        	COUNT(s.order_id) as num_shipments
+FROM   		magento.sales_flat_order o 
+LEFT JOIN 	magento.sales_flat_shipment s ON s.order_id = o.entity_id
+LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id
+WHERE 		o.status != 'canceled'
+AND 		o.store_id = 1
+AND 		(f.severity !=9 or f.severity is null) -- with no null there are 1,927,273;  with (f.severity !=9 OR f.severity is null) there are 2,682,540
+           --	AND DATE_FORMAT(CONVERT_TZ(o.created_at,'UTC','America/New_York'), '%Y-%m-%d') between '2015-01-01' AND '2017-01-31'
+AND			o.increment_id = 111429581
+GROUP BY 	o.entity_id
+ORDER BY	o.entity_id desc</string>
+		<string>SELECT 		MONTH(convert_tz(o.created_at,'UTC','America/New_York')) as month,
+       		COUNT(DISTINCT o.entity_id) as orders
+FROM   		sales_flat_order o
+LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+WHERE  		DATE(convert_tz(o.created_at,'UTC','America/New_York')) BEtWEEN '2017-01-01' AND '2017-12-31'
+AND    		store_id = 1
+AND  		(f.severity !=9 or f.severity is null)
+AND			o.status != 'canceled'
+GROUP BY 	month</string>
+		<string>SELECT 			rule_id,
+				name
+FROM 			salesrule
+WHERE			to_date BETWEEN '2017-01-01' AND '2017-12-31'
+AND			(simple_free_shipping &gt; 0 or apply_to_shipping &gt; 0)</string>
+		<string>SELECT 			rule_id
+FROM 			salesrule
+WHERE			to_date BETWEEN '2017-01-01' AND '2017-12-31'
+AND			(simple_free_shipping &gt; 0 or apply_to_shipping &gt; 0)</string>
+		<string>SELECT 			rule_id
+FROM 			salesrule
+WHERE			to_date BETWEEN '2017-01-01' AND '2017-12-31'
+HAVING			(simple_free_shipping &gt; 0 or apply_to_shipping &gt; 0)</string>
+		<string>SELECT 			rule_id
+FROM 			salesrule
+WHERE			to_date BETWEEN '2017-01-01' AND '2017-12-31'
+AND				name contains 'ship'</string>
+		<string>SELECT *, description
+FROM salesrule</string>
+		<string>SELECT *
+FROM salesrule</string>
+		<string>SELECT  	sku,
+			name,
+			cpf.unit_msrp,
+			cp.value as unit_map,
+			cpf.price/cpf.case_size as cost
+FROM 		catalog_product_flat_3 cpf
+LEFT JOIN 	catalog_product_entity_decimal cp ON cp.entity_id = cpf.entity_id AND cp.attribute_id = 389</string>
+		<string>SELECT  	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+			SUM(soia.price) as rev,
+       		ROUND(AVG(((soia.qty * cpf.price) - (soia.qty * cpf.cost))/(soia.qty * cpf.price)),4) as margin,
+       		ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin /* average margin including media allowance */
+FROM 		sales_order_item_aggregated soia
+JOIN		catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+LEFT JOIN  	(SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  	purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  	purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+WHERE 		date(soia.period) between '2018-02-25' AND '2018-03-03'
+AND  		cpf.type_id = 'Simple'
+AND			soia.store_id = 1
+Group BY  	name
+ORDER BY	rev DESC</string>
+		<string>SELECT  	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+			SUM(soia.price) as rev,
+       		ROUND(AVG(((soia.qty * cpf.price) - (soia.qty * cpf.cost))/(soia.qty * cpf.price)),4) as margin,
+       		ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin /* average margin including media allowance */
+FROM 		sales_order_item_aggregated soia
+JOIN		catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+LEFT JOIN  	(SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  	purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  	purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+WHERE 		date(soia.period) between '2018-02-25' AND '2018-03-03'
+AND  		cpf.type_id = 'Simple'
+AND			soia.store_id = 1
+Group BY  	name</string>
+		<string>SELECT  	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+			SUM(soia.price) as rev,
+       		ROUND(AVG(((soia.qty * cpf.price) - (soia.qty * cpf.cost))/(soia.qty * cpf.price)),4) as margin,
+       		ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin /* average margin including media allowance */
+FROM 		sales_order_item_aggregated soia
+JOIN		catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+LEFT JOIN  	(SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  	purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  	purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+WHERE 		date(soia.period) between '2018-02-25' AND '2018-03-03'
+AND  		cpf.type_id = 'Simple'
+Group BY  	name</string>
+		<string>SELECT  	year(soia.period) as year,
+			week(soia.period) as week,
+       		ROUND(AVG(((soia.qty * cpf.price) - (soia.qty * cpf.cost))/(soia.qty * cpf.price)),4) as margin,
+       		ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin /* average margin including media allowance */
+FROM 		sales_order_item_aggregated soia
+JOIN		catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+LEFT JOIN  	(SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  	purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  	purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+WHERE 		year(soia.period) &gt;= 2016 
+AND  		cpf.type_id = 'Simple'
+AND			soia.store_id = 1
+Group BY  	year, week</string>
+		<string>SELECT  	week(soia.period) as week,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+			SUM(soia.price) as rev,
+       		ROUND(AVG(((soia.qty * cpf.price) - (soia.qty * cpf.cost))/(soia.qty * cpf.price)),4) as margin,
+       		ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin /* average margin including media allowance */
+FROM 		sales_order_item_aggregated soia
+JOIN		catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+LEFT JOIN  	(SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  	purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  	purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+WHERE 		date(soia.period) between '2018-02-25' AND '2018-03-03'
+AND  		cpf.type_id = 'Simple'
+Group BY  	week, name</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as margin,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+          IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%bruer%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) &gt;= '2015-03-02'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%bruer%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) &gt;= '2016-03-02'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%bruw%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) &gt;= '2016-03-02'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%bruw%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) &gt;= '2017-03-02'
+AND    store_id = 1
+GROUP BY date, name</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%asobu%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-02'
+AND    store_id = 1
+GROUP BY date, name</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%asobu%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-02'
+AND    store_id = 1
+GROUP BY date, name</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%gosili%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-02'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%magnaframe%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-02'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%detrapel%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-06'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT month(CONVERT_TZ(created_at,'UTC','America/New_York')) as month,
+      year(CONVERT_TZ(created_at,'UTC','America/New_York')) as year,
+      date(CONVERT_TZ(created_at,'UTC','America/New_York')) as day,
+      SUBSTRING(sku,1,LOCATE('-',sku)-1) as sku_prefix,
+      IF(SUBSTRING(sku,1,LOCATE('-',sku)-1) = 1074, 'WakaWaka',SUBSTRING(name,1,LOCATE(':',name)-1)) as grom_name,
+      COUNT(DISTINCT order_id) as orders,
+      sum(qty_backordered) as backordered_qty
+FROM   sales_flat_order_item
+WHERE  DATE(CONVERT_TZ(created_at,'UTC','America/New_York')) BETWEEN '2018-02-25' AND '2018-03-04'
+AND    qty_backordered &gt;= 1
+AND    store_id = 1
+GROUP BY sku_prefix, day
+ORDER BY day ASC</string>
+		<string>SELECT    	YEAR(t.launch) as year,
+          	WEEK(t.launch) as launch_week,
+          	ROUND(SUM(CASE WHEN soia.period BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 6 DAY) THEN soia.price ELSE 0 END), 2) AS '7 Day Sales',
+          	ROUND(SUM(CASE WHEN soia.period BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN soia.price ELSE 0 END), 2) AS '30 Day Sales'
+FROM      	sales_order_item_aggregated soia
+JOIN      	catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id /* product info*/
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch          
+            FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+           	GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE       soia.store_id = 1 /* consumer store */
+AND       	year(t.launch) &gt;= 2017
+AND       	t.launch IS NOT NULL /* subquery launch date */
+GROUP BY  	year, launch_week</string>
+		<string>SELECT     FORMAT(SUM(IF(t.customer_type = 'Existing', 1, 0))/COUNT(DISTINCT IF(t.customer_type = 'Existing', t.customer_email, 0)),2) AS 'Orders/Exist Cust',
+           FORMAT(SUM(IF(t.customer_type = 'New', 1, 0))/COUNT(DISTINCT IF(t.customer_type = 'New', t.customer_email, 0)),2) AS 'Orders/New Cust',
+           FORMAT(COUNT(t.customer_email)/COUNT(DISTINCT t.customer_email),2) AS 'Orders/Cust'
+FROM       sales_flat_order s
+JOIN       (SELECT  customer_email,
+                    IF(MIN(CONVERT_TZ(created_at, 'UTC','America/New_York')) &lt; ('2018-03-04' - INTERVAL 29 DAY),'Existing','New') AS customer_type,
+                    COUNT(*) as number_of_orders
+           FROM     sales_flat_order_grid
+           GROUP BY customer_email) as t ON t.customer_email = s.customer_email
+WHERE      CONVERT_TZ(s.created_at, 'UTC','America/New_York') BETWEEN ('2018-03-04' - INTERVAL 29 DAY) AND '2018-03-04'
+
+AND        store_id = 1</string>
+		<string>SELECT COUNT(wholesale_retailer_id)/COUNT(DISTINCT wholesale_retailer_id) as purchase_rates
+
+FROM   sales_flat_order
+WHERE  CONVERT_TZ(created_at,'UTC','America/New_York') BETWEEN ('2018-03-04' - INTERVAL 29 DAY) AND '2018-03-04'
+AND    store_id = 3</string>
+		<string>SELECT    FORMAT(SUM(soma.price),2) as 'Total Sales',
+          COUNT(DISTINCT soma.sku_prefix) as total_grommets,
+          FORMAT(SUM(soma.price)/COUNT(DISTINCT soma.sku_prefix),2) as average
+
+FROM      sales_order_maker_aggregated soma
+WHERE     soma.period BETWEEN ('2018-03-04' - INTERVAL 29 DAY) AND '2018-03-04'
+AND       soma.store_id = 1</string>
+		<string>SELECT  	year(soia.period) as year,
+			week(soia.period) as week,
+       		ROUND(AVG(((soia.qty * cpf.price) - (soia.qty * cpf.cost))/(soia.qty * cpf.price)),4) as margin,
+       		ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin /* average margin including media allowance */
+FROM 		sales_order_item_aggregated soia
+JOIN		catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+LEFT JOIN  	(SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  	purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  	purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+WHERE 		year(soia.period) &gt;= 2016 
+AND  		cpf.type_id = 'Simple'
+Group BY  	year, week</string>
+		<string>SELECT		DATE(t.revenue_recognized_at) as DATE,
+			SUM(t.grand_total) as rev
+FROM		(SELECT		o.increment_id AS `order_id`,
+			CONVERT_TZ(o.created_at,'UTC','America/New_York') AS `order_created_at (Eastern)`,
+			i.increment_id AS `invoice_id`,
+			o.status,
+			CONVERT_TZ(i.created_at,'UTC','America/New_York') AS `invoice_created_at (Eastern)`,
+			IF(p.`method`='wholesale_terms' AND p.`additional_information` LIKE '%prepaid%', CONCAT(p.`method`, '_prepaid'), p.`method`) AS `payment_method`,
+			i.subtotal,
+			i.shipping_amount,
+			i.tax_amount,
+			i.discount_amount,
+			i.grand_total,
+			CONVERT_TZ(o.paid_at,'UTC','America/New_York') AS `paid_at (Eastern)`,
+			IF(p.`method`='wholesale_terms' AND p.`additional_information` NOT LIKE '%prepaid%', CONVERT_TZ(i.created_at,'UTC','America/New_York'), CONVERT_TZ(o.paid_at,'UTC','America/New_York')) AS `revenue_recognized_at`
+FROM 		sales_flat_invoice i
+JOIN 		sales_flat_order o ON i.order_id = o.entity_id
+LEFT JOIN 	sales_flat_order_payment p ON p.parent_id = o.entity_id
+LEFT JOIN	frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */
+WHERE 		i.state != 3 /* 3 = cancelled */
+AND 		(o.status != "canceled" or o.status != 'holded')
+AND 		i.store_id = 3 /* 3 = wholesale */
+AND			(f.severity != 9 or f.severity is null)) t /* 9 = fraud */
+WHERE		DATE(t.revenue_recognized_at) &gt;= '2017-01-01'
+GROUP BY 	DATE
+ORDER BY	DATE ASC</string>
+		<string>SELECT     	FORMAT(SUM(IF(t.customer_type = 'Existing', s.base_subtotal, 0)), 2) AS 'Exist Sales',
+			FORMAT(COUNT(DISTINCT IF(t.customer_type = 'Existing', t.customer_email, NULL)),0) AS 'Exist Cust',
+			FORMAT(AVG(IF(t.customer_type = 'New', s.base_subtotal, NULL)), 2) AS 'New AOV'
+FROM       sales_flat_order s
+JOIN       (SELECT  customer_email,
+			IF(MIN(CONVERT_TZ(created_at, 'UTC','America/New_York')) &lt; '2018-02-25','Existing','New') AS customer_type,
+			COUNT(*) as number_of_orders
+			FROM     sales_flat_order
+			WHERE    store_id = 1
+			GROUP BY customer_email) t ON t.customer_email = s.customer_email
+WHERE      	date(CONVERT_TZ(s.created_at, 'UTC','America/New_York')) BETWEEN '2018-02-25' AND '2018-03-03'
+AND        	store_id = 1</string>
+		<string>SELECT    	DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) AS DATE,
+         	FORMAT(SUM(IF(store_id = 1, (base_subtotal + base_shipping_amount - abs(base_discount_amount - base_gift_cards_amount)) * 0.97, 0)),2) AS consumer_rev
+FROM      	sales_flat_order o
+LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+WHERE     	CONVERT_TZ(o.created_at,'UTC','America/New_York') &gt;= '2017-01-03'
+AND  		(f.severity !=9 or f.severity is null)
+AND			o.status != 'canceled'
+GROUP BY  	DATE</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%smarthalo%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-01'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%pebbles%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-01'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%podpocket%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-03-01'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			SUM(CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END) as quantity_on_order,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END as po_submitted,
+			SUM(CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END) as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'NA' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			SUM(CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END) as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'NA' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'NA' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'</string>
+		<string>SELECT 	increment_id as po_number,
+       	DATE(purchasing_order.created_at) as PO_submitted,
+       	month(purchasing_order.created_at) as po_month,
+       	case status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+       	asn_number,
+       	DATE(shipped_at) as date_shipped,
+       	'' as blank,
+       	SUBSTRING(product_name, 1, LOCATE(':', product_name)-1) as grom_prefix,
+       	CASE purchasing_order.submitted_by
+		WHEN 385 THEN 'Sam'
+		WHEN 399 THEN 'Katherine'
+		WHEN 438 THEN 'Erik' 
+		WHEN 465 THEN 'Manny'
+		WHEN 447 THEN 'Kim'
+		WHEN 315 THEN 'Bobby'
+		WHEN 483 THEN 'Erin'
+		WHEN 375 THEN 'Aly'
+		ELSE 'None' END AS 'Created By',
+       	SUBSTRING(product_sku, 1, LOCATE('-', product_sku)-1) as sku_prefix,
+       	product_sku,
+       	purchasing_order_item.product_qty,
+       	case_sku,
+       	product_name,
+       	purchasing_order_item.case_qty,
+       	purchasing_order_item.total_cost,
+       	required_delivery_on,
+       	CASE receiving_warehouse_id WHEN 1 THEN 'Lancaster' WHEN 1906 THEN 'Redlands' ELSE 'Other' END as warehouse_name
+  FROM purchasing_order
+JOIN purchasing_order_item ON purchasing_order_item.order_id = purchasing_order.order_id
+WHERE purchasing_order.created_at &gt; "2017-10-01" 
+AND status IN (4, 5, 6)
+AND CHAR_LENGTH(asn_number) = 10
+ORDER BY increment_id ASC</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'NA' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'NA' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+AND			cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END) as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'NA' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		po.created_at &gt; "2017-10-01" 
+AND			cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END) as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END) as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(CASE WHEN po.status IN(4, 5, 6) THEN DATE(po.created_at) ELSE "NA" END as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(CASE WHEN po.status IN(4, 5, 6) THEN MDATE(po.created_at) ELSE "NA" END as po_submitted,
+			CASE WHEN po.status IN(4,5,6) THEN poi.product_qty ELSE "NA" END as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.name as description,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(DATE(po.created_at)) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(DATE(po.created_at)) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+AND 		po.status IN (4, 5, 6)
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(DATE(po.created_at)) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(DATE(po.created_at)) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+GROUP BY	cpf.sku</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			MAX(DATE(po.created_at)) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1
+GROUP BY	cpf.sku, po_submitted</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			DATE(po.created_at) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.product_sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1</string>
+		<string>SELECT		cpf.brand_name,
+			cpf.sku,
+			CASE WHEN cpf.shipwire_vendor_id = 666 THEN "inv" ELSE "drop" END as inv,
+			DATE(po.created_at) as po_submitted,
+			poi.product_qty as quantity_on_order,
+			case po.status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner
+FROM		catalog_product_flat_1 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN	purchasing_order_item poi ON poi.sku = cpf.sku
+LEFT JOIN	purchasing_order po ON poi.order_id = po.order_id
+WHERE		cp_st.value = 1</string>
+		<string>SELECT 	increment_id as po_number,
+       	DATE(purchasing_order.created_at) as PO_submitted,
+       	month(purchasing_order.created_at) as po_month,
+       	case status WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Review' WHEN 2 THEN 'Pending Approval' WHEN 3 THEN 'Pending Adjustment' WHEN 4 THEN 'Pending Acceptance' WHEN 5 THEN 'Pending Shipment' WHEN 6 THEN 'Shipped' WHEN 7 THEN 'Delivered' WHEN 8 THEN 'Pending Rejected' WHEN 9 THEN 'Canceled' WHEN 10 THEN 'Future Dated Order' ELSE 'None' END AS status,
+       	asn_number,
+       	DATE(shipped_at) as date_shipped,
+       	'' as blank,
+       	SUBSTRING(product_name, 1, LOCATE(':', product_name)-1) as grom_prefix,
+       	CASE purchasing_order.submitted_by
+		WHEN 385 THEN 'Sam'
+		WHEN 399 THEN 'Katherine'
+		WHEN 438 THEN 'Erik' 
+		WHEN 465 THEN 'Manny'
+		WHEN 447 THEN 'Kim'
+		WHEN 315 THEN 'Bobby'
+		WHEN 483 THEN 'Erin'
+		WHEN 375 THEN 'Aly'
+		ELSE 'None' END AS 'Created By',
+       	SUBSTRING(product_sku, 1, LOCATE('-', product_sku)-1) as sku_prefix,
+       	product_sku,
+       	purchasing_order_item.product_qty,
+       	case_sku,
+       	product_name,
+       	purchasing_order_item.case_qty,
+       	purchasing_order_item.total_cost,
+       	required_delivery_on,
+       	CASE receiving_warehouse_id WHEN 1 THEN 'Lancaster' WHEN 1906 THEN 'Redlands' ELSE 'Other' END as warehouse_name
+  FROM purchasing_order
+JOIN purchasing_order_item ON purchasing_order_item.order_id = purchasing_order.order_id
+WHERE purchasing_order.created_at &gt; "2017-10-01" 
+AND status IN (4, 5, 6
+AND CHAR_LENGTH(asn_number) = 10
+ORDER BY increment_id ASC</string>
+		<string>#Dropship query
+
+SET			@date_value = '2017-02-15';
+SELECT   	cpf.brand_name,
+			SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+			t.launch as launch_date,
+			IFNULL(s.revenue,0) as revenue,
+			IFNULL(ss.shipments,0) as shipments,
+			IFNULL(AVG(d.days_to_ship),0) as avg_days_to_ship,
+			IFNULL(pd.avg_processing_days,0) as avg_processing_days,
+			IFNULL(((SUM(oos.oos_skus))/(SUM(oos.sku_count))),0) as '%_oos_skus',
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,
+			CASE WHEN cpf.shipwire_vendor_id = '666' THEN 'Inv' ELSE 'Drop' END AS drop_inv
+FROM     	catalog_product_flat_3 cpf
+LEFT JOIN	(SELECT		cpf.brand_name,
+						cpf.sku,
+						ROUND(SUM(CASE WHEN soia.period BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY)) THEN soia.qty * cpf.price ELSE 0 END), 2) AS revenue
+			FROM		sales_order_item_aggregated soia
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id
+			WHERE		soia.store_id = 3
+			AND			cpf.type_id = 'simple'
+			AND			cpf.shipwire_vendor_id != 666
+			GROUP BY	cpf.brand_name) s ON cpf.brand_name = s.brand_name
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  	(SELECT    	SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch          
+            FROM    	catalog_product_flat_3 cpf
+           	WHERE    	cpf.type_id = 'simple'
+           	GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+LEFT JOIN	(SELECT 	YEAR(s.created_at) as year,
+						WEEK(s.created_at) as week,
+						cpf.brand_name,
+						cpf.sku,
+						COUNT(DISTINCT s.increment_id) as shipments,
+       					sv.name as vendor
+			FROM 		sales_flat_shipment_item si 
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = si.product_id
+			LEFT JOIN	sales_flat_shipment s ON s.entity_id = si.parent_id
+			JOIN 		shipwire_vendor sv ON sv.vendor_id = s.shipwire_vendor_id
+			WHERE  		DATE(convert_tz(s.created_at,'UTC','America/New_York')) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			s.store_id = 3
+			GROUP BY 	cpf.brand_name) ss ON ss.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT 	s.increment_id as shipping_id,
+       					o.increment_id as order_id,
+       					DATE(o.created_at) order_date,
+       					DATE(IFNULL(max(s.shipped_at),now())) as shipped_at,
+       					DATEDIFF(s.shipped_at, o.created_at) as days_to_ship,
+       					cpf.brand_name,
+       					cpf.sku,
+       					sv.name as vendor
+			FROM 		sales_flat_shipment s
+			LEFT JOIN 	sales_flat_order o ON o.entity_id = s.order_id
+			LEFT JOIN	sales_flat_shipment_item si ON si.parent_id = s.entity_id
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = si.product_id
+			JOIN 		shipwire_vendor sv ON sv.vendor_id = s.shipwire_vendor_id
+			WHERE  		DATE(convert_tz(s.shipped_at,'UTC','America/New_York')) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			o.store_id = 3
+			GROUP BY 	cpf.brand_name, s.increment_id) d ON d.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT		cpf.sku,
+						cpf.brand_name,
+						AVG(shipment_processing_days) as avg_processing_days
+			FROM		catalog_product_flat_3 cpf
+			LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+			WHERE		cpf.type_id = 'simple'
+			AND			cpf.shipwire_vendor_id != 666
+			GROUP BY	cpf.brand_name) pd ON pd.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT   	YEAR(i.snapshot_date) as year,
+						WEEK(i.snapshot_date) as week,
+						cpf.brand_name,
+						cpf.sku,
+         				COUNT(DISTINCT CASE WHEN i.qty = 0 THEN i.product_id ELSE NULL END) as 'OOS_skus',
+         				COUNT(DISTINCT i.product_id) as sku_count
+			FROM     	catalog_product_flat_3 cpf
+			LEFT JOIN	inventorysnapshot_snapshot i ON cpf.entity_id = i.product_id
+			WHERE    	DATE(i.snapshot_date) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			i.status = 1
+			AND			i.store_id = 3
+			AND			i.discontinued = 0
+			AND			cpf.type_id = 'simple'
+			GROUP BY 	cpf.brand_name) oos ON cpf.brand_name = oos.brand_name
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE		t.launch IS NOT NULL
+AND			cpf.shipwire_vendor_id != 666
+AND			cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY 	cpf.brand_name</string>
+		<string>#Dropship query
+
+SET			@date_value = '2018-02-15';
+SELECT   	cpf.brand_name,
+			SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+			t.launch as launch_date,
+			IFNULL(s.revenue,0) as revenue,
+			IFNULL(ss.shipments,0) as shipments,
+			IFNULL(AVG(d.days_to_ship),0) as avg_days_to_ship,
+			IFNULL(pd.avg_processing_days,0) as avg_processing_days,
+			IFNULL(((SUM(oos.oos_skus))/(SUM(oos.sku_count))),0) as '%_oos_skus',
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,
+			CASE WHEN cpf.shipwire_vendor_id = '666' THEN 'Inv' ELSE 'Drop' END AS drop_inv
+FROM     	catalog_product_flat_3 cpf
+LEFT JOIN	(SELECT		cpf.brand_name,
+						cpf.sku,
+						ROUND(SUM(CASE WHEN soia.period BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY)) THEN soia.qty * cpf.price ELSE 0 END), 2) AS revenue
+			FROM		sales_order_item_aggregated soia
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id
+			WHERE		soia.store_id = 3
+			AND			cpf.type_id = 'simple'
+			AND			cpf.shipwire_vendor_id != 666
+			GROUP BY	cpf.brand_name) s ON cpf.brand_name = s.brand_name
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  	(SELECT    	SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch          
+            FROM    	catalog_product_flat_3 cpf
+           	WHERE    	cpf.type_id = 'simple'
+           	GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+LEFT JOIN	(SELECT 	YEAR(s.created_at) as year,
+						WEEK(s.created_at) as week,
+						cpf.brand_name,
+						cpf.sku,
+						COUNT(DISTINCT s.increment_id) as shipments,
+       					sv.name as vendor
+			FROM 		sales_flat_shipment_item si 
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = si.product_id
+			LEFT JOIN	sales_flat_shipment s ON s.entity_id = si.parent_id
+			JOIN 		shipwire_vendor sv ON sv.vendor_id = s.shipwire_vendor_id
+			WHERE  		DATE(convert_tz(s.created_at,'UTC','America/New_York')) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			s.store_id = 3
+			GROUP BY 	cpf.brand_name) ss ON ss.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT 	s.increment_id as shipping_id,
+       					o.increment_id as order_id,
+       					DATE(o.created_at) order_date,
+       					DATE(IFNULL(max(s.shipped_at),now())) as shipped_at,
+       					DATEDIFF(s.shipped_at, o.created_at) as days_to_ship,
+       					cpf.brand_name,
+       					cpf.sku,
+       					sv.name as vendor
+			FROM 		sales_flat_shipment s
+			LEFT JOIN 	sales_flat_order o ON o.entity_id = s.order_id
+			LEFT JOIN	sales_flat_shipment_item si ON si.parent_id = s.entity_id
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = si.product_id
+			JOIN 		shipwire_vendor sv ON sv.vendor_id = s.shipwire_vendor_id
+			WHERE  		DATE(convert_tz(s.shipped_at,'UTC','America/New_York')) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			o.store_id = 3
+			GROUP BY 	cpf.brand_name, s.increment_id) d ON d.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT		cpf.sku,
+						cpf.brand_name,
+						AVG(shipment_processing_days) as avg_processing_days
+			FROM		catalog_product_flat_3 cpf
+			LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+			WHERE		cpf.type_id = 'simple'
+			AND			cpf.shipwire_vendor_id != 666
+			GROUP BY	cpf.brand_name) pd ON pd.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT   	YEAR(i.snapshot_date) as year,
+						WEEK(i.snapshot_date) as week,
+						cpf.brand_name,
+						cpf.sku,
+         				COUNT(DISTINCT CASE WHEN i.qty = 0 THEN i.product_id ELSE NULL END) as 'OOS_skus',
+         				COUNT(DISTINCT i.product_id) as sku_count
+			FROM     	catalog_product_flat_3 cpf
+			LEFT JOIN	inventorysnapshot_snapshot i ON cpf.entity_id = i.product_id
+			WHERE    	DATE(i.snapshot_date) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			i.status = 1
+			AND			i.store_id = 3
+			AND			i.discontinued = 0
+			AND			cpf.type_id = 'simple'
+			GROUP BY 	cpf.brand_name) oos ON cpf.brand_name = oos.brand_name
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE		t.launch IS NOT NULL
+AND			cpf.shipwire_vendor_id != 666
+AND			cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY 	cpf.brand_name</string>
+		<string>SELECT   	cpf.brand_name,
+			SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+			t.launch as launch_date,
+			IFNULL(s.revenue,0) as revenue,
+			IFNULL(ss.shipments,0) as shipments,
+			IFNULL(AVG(d.days_to_ship),0) as avg_days_to_ship,
+			IFNULL(pd.avg_processing_days,0) as avg_processing_days,
+			IFNULL(((SUM(oos.oos_skus))/(SUM(oos.sku_count))),0) as '%_oos_skus',
+			CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,
+			CASE WHEN cpf.shipwire_vendor_id = '666' THEN 'Inv' ELSE 'Drop' END AS drop_inv
+FROM     	catalog_product_flat_3 cpf
+LEFT JOIN	(SELECT		cpf.brand_name,
+						cpf.sku,
+						ROUND(SUM(CASE WHEN soia.period BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY)) THEN soia.qty * cpf.price ELSE 0 END), 2) AS revenue
+			FROM		sales_order_item_aggregated soia
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id
+			WHERE		soia.store_id = 3
+			AND			cpf.type_id = 'simple'
+			AND			cpf.shipwire_vendor_id != 666
+			GROUP BY	cpf.brand_name) s ON cpf.brand_name = s.brand_name
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  	(SELECT    	SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch          
+            FROM    	catalog_product_flat_3 cpf
+           	WHERE    	cpf.type_id = 'simple'
+           	GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+LEFT JOIN	(SELECT 	YEAR(s.created_at) as year,
+						WEEK(s.created_at) as week,
+						cpf.brand_name,
+						cpf.sku,
+						COUNT(DISTINCT s.increment_id) as shipments,
+       					sv.name as vendor
+			FROM 		sales_flat_shipment_item si 
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = si.product_id
+			LEFT JOIN	sales_flat_shipment s ON s.entity_id = si.parent_id
+			JOIN 		shipwire_vendor sv ON sv.vendor_id = s.shipwire_vendor_id
+			WHERE  		DATE(convert_tz(s.created_at,'UTC','America/New_York')) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			s.store_id = 3
+			GROUP BY 	cpf.brand_name) ss ON ss.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT 	s.increment_id as shipping_id,
+       					o.increment_id as order_id,
+       					DATE(o.created_at) order_date,
+       					DATE(IFNULL(max(s.shipped_at),now())) as shipped_at,
+       					DATEDIFF(s.shipped_at, o.created_at) as days_to_ship,
+       					cpf.brand_name,
+       					cpf.sku,
+       					sv.name as vendor
+			FROM 		sales_flat_shipment s
+			LEFT JOIN 	sales_flat_order o ON o.entity_id = s.order_id
+			LEFT JOIN	sales_flat_shipment_item si ON si.parent_id = s.entity_id
+			LEFT JOIN	catalog_product_flat_3 cpf ON cpf.entity_id = si.product_id
+			JOIN 		shipwire_vendor sv ON sv.vendor_id = s.shipwire_vendor_id
+			WHERE  		DATE(convert_tz(s.shipped_at,'UTC','America/New_York')) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			o.store_id = 3
+			GROUP BY 	cpf.brand_name, s.increment_id) d ON d.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT		cpf.sku,
+						cpf.brand_name,
+						AVG(shipment_processing_days) as avg_processing_days
+			FROM		catalog_product_flat_3 cpf
+			LEFT JOIN  	shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+			WHERE		cpf.type_id = 'simple'
+			AND			cpf.shipwire_vendor_id != 666
+			GROUP BY	cpf.brand_name) pd ON pd.brand_name = cpf.brand_name
+LEFT JOIN	(SELECT   	YEAR(i.snapshot_date) as year,
+						WEEK(i.snapshot_date) as week,
+						cpf.brand_name,
+						cpf.sku,
+         				COUNT(DISTINCT CASE WHEN i.qty = 0 THEN i.product_id ELSE NULL END) as 'OOS_skus',
+         				COUNT(DISTINCT i.product_id) as sku_count
+			FROM     	catalog_product_flat_3 cpf
+			LEFT JOIN	inventorysnapshot_snapshot i ON cpf.entity_id = i.product_id
+			WHERE    	DATE(i.snapshot_date) BETWEEN @date_value AND (DATE_ADD(@date_value, INTERVAL 13 DAY))
+			AND			i.status = 1
+			AND			i.store_id = 3
+			AND			i.discontinued = 0
+			AND			cpf.type_id = 'simple'
+			GROUP BY 	cpf.brand_name) oos ON cpf.brand_name = oos.brand_name
+LEFT JOIN 	catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN 	admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE		t.launch IS NOT NULL
+AND			cpf.shipwire_vendor_id != 666
+AND			cp_st.value = 1
+AND			cpf.type_id = 'simple'
+GROUP BY 	cpf.brand_name</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%dreamfarm%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-27'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%dreamfarm%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%gaswatch%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%patagonia bee%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%detrapel%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT  	sku,
+			name,
+			cpf.unit_msrp,
+			cp.value as unit_map,
+			cpf.cost/cpf.case_size as cost
+FROM 		catalog_product_flat_3 cpf
+LEFT JOIN 	catalog_product_entity_decimal cp ON cp.entity_id = cpf.entity_id AND cp.attribute_id = 389</string>
+		<string>SELECT  	sku,
+			name,
+			cpf.unit_msrp,
+			cp.value as unit_map,
+			cpf.cost
+FROM 		catalog_product_flat_3 cpf
+LEFT JOIN 	catalog_product_entity_decimal cp ON cp.entity_id = cpf.entity_id AND cp.attribute_id = 389</string>
+		<string>SELECT  	distinct sku
+FROM 		catalog_product_flat_3 cpf
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+WHERE		cp_st.value = 1</string>
+		<string>SELECT  	distinct sku
+FROM 		catalog_product_flat_1 cpf
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+WHERE		cp_st.value = 1</string>
+		<string>SELECT  	sku
+FROM 		catalog_product_flat_1 cpf
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+WHERE		cp_st.value = 1</string>
+		<string>SELECT  	sku
+FROM 		catalog_product_flat_3 cpf
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+WHERE		cp_st.value = 1</string>
+		<string>SELECT  	sku,
+FROM 		catalog_product_flat_3 cpf
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+WHERE		cp_st.value = 1</string>
+		<string>SELECT		cpfw.sku as wholesale_sku,
+			cpfc.sku as consumer_sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpfw.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
+WHERE		cp_st.value = 1
+AND			cpfw.type_id = 'simple'</string>
+		<string>SELECT		cpfw.sku as wholesale_sku,
+			cpfc.sku as consumer_sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpfw.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
+WHERE		cp_st.value = 1</string>
+		<string>SELECT		cpfw.sku as wholesale_sku,
+			cpfc.sku as consumer_sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpfw.entity_id AND cp_st.attribute_id = 84 /* status */
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
+WHERE		cp_st.value = 1</string>
+		<string>SELECT		cpfw.sku as wholesale_sku,
+			cpfc.sku as consumer_sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 /* status */
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
+WHERE		cp_st.value = 1</string>
+		<string>SELECT		cpfw.sku as wholesale_sku,
+			cpfc.sku as consumer_sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value</string>
+		<string>SELECT		cpfw.sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value</string>
+		<string>SELECT		cpfw.sku,
+			cpfw.name,
+			cp_lp.value,
+			cpfc.price as consumer_price,
+			cpfw.unit_msrp as wholesale_unit_price
+FROM		catalog_product_flat_3 cpfw
+LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpf.entity_id AND cp_lp.attribute_id = 390
+LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value</string>
+		<string>SELECT		cpf.sku,
+			cpf.name,
+			cp_st.value
+FROM		catalog_product_flat_3 cpf
+LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 390</string>
+		<string>#Purchasing Case Cost
+SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+		  cpf.sku as sku,
+		  cpf.name as description,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
+          cpf.grommet_category_value as category,
+          ROUND(cpf.cost,2) as catalog_cost,
+          ROUND(pc.cost,2) as unit_po_cost,
+          cpf.price,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
+          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
+          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
+          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
+          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued,
+          cpf.cost - pc.cost as cost_difference
+FROM       catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE      cpf.type_id = 'simple'
+AND		   si.store_id = 1
+AND		   cp_st.value = 1
+AND		   cpf.shipwire_vendor_id = 666
+AND		   pc.type = 1
+Group BY   sku
+Having cost_difference !=0</string>
+		<string>#Purchasing Case Cost
+SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+		  cpf.sku as sku,
+		  cpf.name as description,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
+          cpf.grommet_category_value as category,
+          ROUND(cpf.cost,2) as catalog_cost,
+          ROUND(pc.cost,2) as unit_po_cost,
+          cpf.price,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
+          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
+          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
+          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
+          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued,
+          cpf.cost - pc.cost as cost_difference
+FROM       catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE      cpf.type_id = 'simple'
+AND		   si.store_id = 1
+AND		   cp_st.value = 1
+AND		   cpf.shipwire_vendor_id = 666
+AND		   pc.type = 1
+Group BY   sku
+Having difference !=0</string>
+		<string>#Purchasing Case Cost
+SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+		  cpf.sku as sku,
+		  cpf.name as description,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
+          cpf.grommet_category_value as category,
+          ROUND(cpf.cost,2) as catalog_cost,
+          ROUND(pc.cost,2) as unit_po_cost,
+          cpf.price,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
+          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
+          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
+          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
+          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued,
+          cpf.cost - pc.cost as cost_difference
+FROM       catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE      cpf.type_id = 'simple'
+AND		   si.store_id = 1
+AND		   cp_st.value = 1
+AND		   cpf.shipwire_vendor_id = 666
+AND		   pc.type = 1
+Group BY   sku</string>
+		<string>#Purchasing Case Cost
+SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+		  cpf.sku as sku,
+		  cpf.name as description,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
+          cpf.grommet_category_value as category,
+          ROUND(cpf.cost,2) as catalog_cost,
+          ROUND(pc.cost,2) as unit_po_cost,
+          cpf.price,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
+          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
+          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
+          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
+          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued
+FROM       catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE      cpf.type_id = 'simple'
+AND		   si.store_id = 1
+AND		   cp_st.value = 1
+AND		   cpf.shipwire_vendor_id = 666
+AND		   pc.type = 1
+Group BY   sku</string>
+		<string>#Purchasing Case Cost
+SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+		  cpf.sku as sku,
+		  cpf.name as description,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
+          cpf.grommet_category_value as category,
+          ROUND(cpf.cost,2) as catalog_cost,
+          ROUND(pc.cost,2) as unit_po_cost,
+          ROUND(pc.cost/pc.qty,2) as unit_po_cost_divide,
+          cpf.price,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
+          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
+          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
+          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
+          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued
+FROM       catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE      cpf.type_id = 'simple'
+AND		   si.store_id = 1
+AND		   cp_st.value = 1
+AND		   cpf.shipwire_vendor_id = 666
+AND		   pc.type = 1
+Group BY   sku</string>
+		<string>#Purchasing Case Cost
+SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+		  cpf.sku as sku,
+		  cpf.name as description,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
+          cpf.grommet_category_value as category,
+          ROUND(cpf.cost,2) as catalog_cost,
+          ROUND(pc.cost) as unit_po_cost,
+          ROUND(pc.cost/pc.qty,2) as unit_po_cost_divide,
+          cpf.price,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
+		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
+          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
+          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
+          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
+          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued
+FROM       catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+WHERE      cpf.type_id = 'simple'
+AND		   si.store_id = 1
+AND		   cp_st.value = 1
+AND		   cpf.shipwire_vendor_id = 666
+AND		   pc.type = 1
+Group BY   sku</string>
+		<string>Select table_name, column_name
+        from information_Schema.columns
+        where column_Name like '%details%'</string>
+		<string>Select table_name, column_name
+        from information_Schema.columns
+        where column_Name like '%linked%'</string>
+		<string>Select table_name, column_name
+        from information_Schema.columns
+        where column_Name like '%link%'</string>
+		<string>SELECT DISTINCT link_type_id
+FROM	catalog_product_link</string>
+		<string>SELECT *
+FROM	catalog_product_link</string>
+		<string>SELECT    	o.customer_email as customer_id,
+          	o.increment_id as order_number,
+          	DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) as transaction_date,
+          	sf.sku as sku_number,
+      	  	FORMAT(SUM(CASE WHEN sf.product_type = 'simple' THEN sf.qty_ordered * cpf.price ELSE 0 END), 2) as sku_revenue,
+      	  	FORMAT(SUM(CASE WHEN sf.base_discount_amount &gt; 0 THEN sf.base_discount_amount ELSE 0 END), 2) as discount_amount  
+FROM      	sales_flat_order o
+LEFT JOIN   frauddetection_order_assessment f ON f.order_id = o.entity_id
+LEFT JOIN 	sales_flat_order_item sf ON sf.order_id = o.entity_id
+LEFT JOIN	catalog_product_flat_1 cpf ON cpf.entity_id = sf.product_id
+WHERE		o.store_id = 1
+AND			o.status = 'complete'
+AND			(f.severity != 9
+OR			f.severity IS NULL)
+AND			DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) BETWEEN '2016-03-01' AND '2016-12-31'
+GROUP BY 	o.increment_id, sf.sku
+ORDER BY 	customer_id ASC</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%traction%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-22'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%rem-fit%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-21'
+AND    store_id = 1
+GROUP BY date</string>
+	</array>
+	<key>rdbms_type</key>
+	<string>mysql</string>
+	<key>rdbms_version</key>
+	<string>5.5.5-10.2.11-MariaDB</string>
+	<key>version</key>
+	<integer>1</integer>
+</dict>
+</plist>
