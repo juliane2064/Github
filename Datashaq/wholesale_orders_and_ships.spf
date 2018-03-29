@@ -1,0 +1,31 @@
+#Wholesale Shipments and Orders - Weekly COMPLETE
+SELECT		WEEK(CONVERT_TZ(so.created_at,'UTC','America/New_york')) as week,
+			COUNT(DISTINCT so.entity_id) as orders,
+			ROUND((((COUNT(DISTINCT so.entity_id)) - py.orders) / py.orders) * 100,2) as orders_yoy,
+			COUNT(DISTINCT ss.entity_id) as shipments,
+			ROUND((((COUNT(DISTINCT ss.entity_id)) - py.shipments) / py.shipments) * 100,2) as shipments_yoy,	
+			ROUND(AVG(so.total_qty_ordered),2) as items_per_order,
+			ROUND((((AVG(so.total_qty_ordered)) - py.items_per_order) / py.items_per_order) * 100,2) as items_per_order_yoy,
+			ROUND(AVG(DATEDIFF(DATE(ss.shipped_at), DATE(so.created_at))),2) as time_to_ship,
+			ROUND((((AVG(DATEDIFF(DATE(ss.shipped_at), DATE(so.created_at)))) - py.time_to_ship) / py.time_to_ship) * 100,2) as time_to_ship_yoy
+FROM 		sales_flat_order so
+LEFT JOIN	sales_flat_shipment ss ON so.entity_id = ss.order_id	
+LEFT JOIN	(SELECT 	WEEK(s.created_at) as week,
+						COUNT(DISTINCT s.entity_id) as orders,
+						COUNT(DISTINCT ss.order_id) as shipments,
+						AVG(s.total_qty_ordered) as items_per_order,
+						AVG(DATEDIFF(DATE(ss.shipped_at), DATE(s.created_at))) as time_to_ship
+			FROM		sales_flat_order s
+			LEFT JOIN	sales_flat_shipment ss ON s.entity_id = ss.order_id	
+			LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = s.entity_id /* Fraud Filter */	
+			WHERE		DATE(CONVERT_TZ(s.created_at,'UTC','America/New_york')) BETWEEN '2017-01-01' AND '2017-12-31'
+			AND			s.store_id = 3
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			s.status != 'canceled'
+			GROUP BY 	week) py ON py.week = week(so.created_at)
+LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = so.entity_id /* Fraud Filter */	
+WHERE		DATE(CONVERT_TZ(so.created_at,'UTC','America/New_york')) >= '2018-01-01'
+AND			so.store_id = 3
+AND  		(f.severity !=9 or f.severity is null)
+AND			so.status != 'canceled'
+GROUP BY	week;	

@@ -1,0 +1,13 @@
+#In Stock % COMPLETE
+SELECT		WEEK(i.snapshot_date) as week,
+			(COUNT(DISTINCT IF(i.qty >= 2,i.id,NULL))) / (COUNT(DISTINCT i.id)) as in_stock,
+			COUNT(DISTINCT IF(i.qty >= 2,i.id,NULL)) as skus_in_stock,
+			COUNT(DISTINCT i.id) as total_skus
+FROM		inventorysnapshot_snapshot i 
+LEFT JOIN 	catalog_product_flat_1 c ON c.entity_id = i.product_id
+WHERE		DATE(CONVERT_TZ(i.snapshot_date,'UTC','America/New_York')) >= '2018-01-01'
+AND			i.store_id = 1
+AND			i.status = 1
+AND			i.discontinued = 0
+AND			c.launch_date IS NOT NULL
+GROUP BY    week;
