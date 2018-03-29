@@ -1,8 +1,0 @@
-#Backorders - Weekly COMPLETE
-SELECT		WEEK(si.created_at) as week,
-			COUNT(DISTINCT si.order_id) as backorders
-FROM		sales_flat_order_item si
-WHERE		date(CONVERT_TZ(si.created_at,'UTC','America/New_york')) >= '2018-01-01'
-AND			si.store_id = 1
-AND			si.qty_backordered > 0
-GROUP BY	week;
