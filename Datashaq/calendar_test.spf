@@ -10,6 +10,8 @@
 	<dict>
 		<key>connection</key>
 		<dict>
+			<key>database</key>
+			<string>bi-test</string>
 			<key>host</key>
 			<string>datashack.production.thegrommet.com</string>
 			<key>kcid</key>
@@ -62,27 +64,30 @@
 			<key>contentSortColIsAsc</key>
 			<true/>
 			<key>contentViewport</key>
-			<string>{{0, 0}, {694, 450}}</string>
+			<string>{{0, 0}, {1022, 529}}</string>
 			<key>isToolbarVisible</key>
 			<true/>
 			<key>queries</key>
-			<string>CREATE TABLE IF NOT EXISTS calendar_test (
+			<string>#1 Drop table
+drop table calendar_staging
+;
+
+#2 Create Staging Table
+CREATE TABLE IF NOT EXISTS calendar_staging (
 	email_num INTEGER NOT NULL,
 	email_date DATE NOT NULL,
 	position INTEGER NOT NULL,
 	sku_prefix VARCHAR(128) NOT NULL,
-	grommet_name VARCHAR(128) NOT NULL,
 	spot VARCHAR(128),
 	content_direction VARCHAR(128), 
 	high_level_campaign VARCHAR(128),
 	promotional_pricing VARCHAR(128),
-	refreshed_at TIMESTAMP,
-	product_id INTEGER,
 	unique Key uk_email_date_pos(email_num, email_date, position)
 	);
 
-LOAD DATA LOCAL INFILE '/Users/juliane/Documents/.csv' 
-INTO TABLE calendar_test 
+#3 Load New Data - Make sure to update csv name
+LOAD DATA LOCAL INFILE '/Users/juliane/Documents/ShaqCalendarUploads/shaq_calendar_upload.csv' 
+INTO TABLE calendar_staging 
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' LINES TERMINATED BY '\n'
 IGNORE 1 LINES
@@ -90,15 +95,71 @@ IGNORE 1 LINES
 	email_date,
 	position,
 	sku_prefix,
-	grommet_name,
 	spot,
 	content_direction, 
 	high_level_campaign,
 	promotional_pricing)
-
 ;
 
-drop table calendar_test;</string>
+
+#Actual Table - Only needed to run this at creation
+/*CREATE TABLE IF NOT EXISTS calendar (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	grommet_name VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	);*/
+
+#1 Replace data into calendar table
+REPLACE INTO calendar(email_num,
+			email_date,
+			position,
+			sku_prefix,
+			spot,
+			content_direction, 
+			high_level_campaign,
+			promotional_pricing,
+			grommet_name,
+			refreshed_at,
+			product_id)
+
+SELECT		cs.email_num,
+			cs.email_date,
+			cs.position,
+			cs.sku_prefix,
+			cs.spot,
+			cs.content_direction, 
+			cs.high_level_campaign,
+			cs.promotional_pricing,
+			cpf.name as grommet_name,
+			now() as refreshed_at,
+			cpf.entity_id as product_id			
+FROM		calendar_staging cs
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON cs.sku_prefix = cpf.sku;
+
+#Drop if necessary
+#drop table calendar
+;
+
+
+
+
+
+
+
+
+
+</string>
+			<key>table</key>
+			<string>v_marketing_active_customers</string>
 			<key>view</key>
 			<string>SP_VIEW_CUSTOMQUERY</string>
 			<key>windowVerticalDividerPosition</key>
@@ -152,6 +213,367 @@ drop table calendar_test;</string>
 	</array>
 	<key>queryHistory</key>
 	<array>
+		<string>#Actual Table - Only needed to run this at creation
+CREATE TABLE IF NOT EXISTS calendar (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	grommet_name VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/ShaqCalendarUploads/shaq_calendar_upload.csv' 
+INTO TABLE calendar_staging 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)</string>
+		<string>#Staging Table
+CREATE TABLE IF NOT EXISTS calendar_staging (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>drop table calendar_staging</string>
+		<string>REPLACE INTO calendar(email_num,
+			email_date,
+			position,
+			sku_prefix,
+			spot,
+			content_direction, 
+			high_level_campaign,
+			promotional_pricing,
+			grommet_name,
+			refreshed_at,
+			product_id)
+
+SELECT		cs.email_num,
+			cs.email_date,
+			cs.position,
+			cs.sku_prefix,
+			cs.spot,
+			cs.content_direction, 
+			cs.high_level_campaign,
+			cs.promotional_pricing,
+			cpf.name as grommet_name,
+			now() as refreshed_at,
+			cpf.entity_id as product_id			
+FROM		calendar_staging cs
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON cs.sku_prefix = cpf.sku</string>
+		<string>REPLACE INTO calendar(email_num,
+			email_date,
+			position,
+			sku_prefix,
+			spot,
+			content_direction, 
+			high_level_campaign,
+			promotional_pricing,
+			grommet_name,
+			refreshed_at,
+			product_id)
+
+SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			cpf.name as grommet_name,
+			now() as refreshed_at,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>#Actual Table
+CREATE TABLE IF NOT EXISTS calendar (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	grommet_name VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>drop table calendar</string>
+		<string>REPLACE INTO calendar(email_num,
+			email_date,
+			position,
+			sku_prefix,
+			spot,
+			content_direction, 
+			high_level_campaign,
+			promotional_pricing,
+			grommet_name,
+			refreshed_date,
+			product_id)
+
+SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			cpf.name as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>#Actual Table
+CREATE TABLE IF NOT EXISTS calendar (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	grommet_name VARCHAR(128) NOT NULL,
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/shaq_calendar_upload_test.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)</string>
+		<string>SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			cpf.name as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			cpf.brand_name as grommet_name,
+			cpf.name,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>SELECT 		cpf.sku,
+			cpf.name,
+			LOCATE(':',cpf.name),
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name
+FROM		magento.catalog_product_flat_1 cpf
+LIMIT		500</string>
+		<string>SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			cpf.brand_name as grommet_name,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>SELECT 		cpf.sku,
+			LOCATE(':',cpf.name),
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name
+FROM		magento.catalog_product_flat_1 cpf
+LIMIT		500</string>
+		<string>SELECT 		cpf.sku,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name
+FROM		magento.catalog_product_flat_1 cpf
+LIMIT		500</string>
+		<string>SELECT 		sku,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name
+FROM		magento.catalog_product_flat_1 cpf
+LIMIT		500</string>
+		<string>SELECT 		SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name
+FROM		magento.catalog_product_flat_1 cpf
+LIMIT		500</string>
+		<string>SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			cpf.brand_name as grommet_name,
+			#SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			cpf.sku,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>SELECT		ct.email_num,
+			ct.email_date,
+			ct.position,
+			ct.sku_prefix,
+			ct.spot,
+			ct.content_direction, 
+			ct.high_level_campaign,
+			ct.promotional_pricing,
+			SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as grommet_name,
+			now() as refreshed_date,
+			cpf.entity_id as product_id			
+FROM		calendar_test ct
+LEFT JOIN	magento.catalog_product_flat_1 cpf ON ct.sku_prefix = cpf.sku</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/shaq_calendar_upload.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)</string>
+		<string>CREATE TABLE IF NOT EXISTS calendar_test (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>drop table calendar_test</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/shaq_calendar_upload.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	grommet_name,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/shaq_calendar_upload_test.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	grommet_name,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing,
+	now() as refreshed_at)</string>
+		<string>CREATE TABLE IF NOT EXISTS calendar_test (
+	email_num INTEGER NOT NULL,
+	email_date DATE NOT NULL,
+	position INTEGER NOT NULL,
+	sku_prefix VARCHAR(128) NOT NULL,
+	grommet_name VARCHAR(128) NOT NULL,
+	spot VARCHAR(128),
+	content_direction VARCHAR(128), 
+	high_level_campaign VARCHAR(128),
+	promotional_pricing VARCHAR(128),
+	refreshed_at TIMESTAMP,
+	product_id INTEGER,
+	unique Key uk_email_date_pos(email_num, email_date, position)
+	)</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/shaq_calendar_upload_test.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	grommet_name,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)</string>
+		<string>LOAD DATA LOCAL INFILE '/Users/juliane/Documents/.csv' 
+INTO TABLE calendar_test 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+	(email_num,
+	email_date,
+	position,
+	sku_prefix,
+	grommet_name,
+	spot,
+	content_direction, 
+	high_level_campaign,
+	promotional_pricing)</string>
 		<string>CREATE TABLE IF NOT EXISTS calendar_test (
 	email_num INTEGER NOT NULL,
 	email_date DATE NOT NULL,
@@ -165,7 +587,6 @@ drop table calendar_test;</string>
 	refreshed_at TIMESTAMP,
 	unique Key uk_email_date_pos(email_num, email_date, position)
 	)</string>
-		<string>drop table calendar_test</string>
 		<string>CREATE TABLE IF NOT EXISTS calendar_test (
 	email_num INTEGER NOT NULL,
 	email_date DATE NOT NULL,
@@ -1306,360 +1727,6 @@ WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%gaswatch%'
 AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
 AND    store_id = 1
 GROUP BY date</string>
-		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
-       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
-       base_price,
-       COUNT(DISTINCT order_id) as orders,
-       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
-       sum(base_price * qty_ordered) as revenue
-FROM   sales_flat_order_item
-WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%patagonia bee%'
-AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
-AND    store_id = 1
-GROUP BY date</string>
-		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
-       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
-       base_price,
-       COUNT(DISTINCT order_id) as orders,
-       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
-       sum(base_price * qty_ordered) as revenue
-FROM   sales_flat_order_item
-WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%detrapel%'
-AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-02-28'
-AND    store_id = 1
-GROUP BY date</string>
-		<string>SELECT  	sku,
-			name,
-			cpf.unit_msrp,
-			cp.value as unit_map,
-			cpf.cost/cpf.case_size as cost
-FROM 		catalog_product_flat_3 cpf
-LEFT JOIN 	catalog_product_entity_decimal cp ON cp.entity_id = cpf.entity_id AND cp.attribute_id = 389</string>
-		<string>SELECT  	sku,
-			name,
-			cpf.unit_msrp,
-			cp.value as unit_map,
-			cpf.cost
-FROM 		catalog_product_flat_3 cpf
-LEFT JOIN 	catalog_product_entity_decimal cp ON cp.entity_id = cpf.entity_id AND cp.attribute_id = 389</string>
-		<string>SELECT  	distinct sku
-FROM 		catalog_product_flat_3 cpf
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-WHERE		cp_st.value = 1</string>
-		<string>SELECT  	distinct sku
-FROM 		catalog_product_flat_1 cpf
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-WHERE		cp_st.value = 1</string>
-		<string>SELECT  	sku
-FROM 		catalog_product_flat_1 cpf
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-WHERE		cp_st.value = 1</string>
-		<string>SELECT  	sku
-FROM 		catalog_product_flat_3 cpf
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-WHERE		cp_st.value = 1</string>
-		<string>SELECT  	sku,
-FROM 		catalog_product_flat_3 cpf
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-WHERE		cp_st.value = 1</string>
-		<string>SELECT		cpfw.sku as wholesale_sku,
-			cpfc.sku as consumer_sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpfw.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
-WHERE		cp_st.value = 1
-AND			cpfw.type_id = 'simple'</string>
-		<string>SELECT		cpfw.sku as wholesale_sku,
-			cpfc.sku as consumer_sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpfw.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
-WHERE		cp_st.value = 1</string>
-		<string>SELECT		cpfw.sku as wholesale_sku,
-			cpfc.sku as consumer_sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpfw.entity_id AND cp_st.attribute_id = 84 /* status */
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
-WHERE		cp_st.value = 1</string>
-		<string>SELECT		cpfw.sku as wholesale_sku,
-			cpfc.sku as consumer_sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN 	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 /* status */
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value
-WHERE		cp_st.value = 1</string>
-		<string>SELECT		cpfw.sku as wholesale_sku,
-			cpfc.sku as consumer_sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value</string>
-		<string>SELECT		cpfw.sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpfw.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value</string>
-		<string>SELECT		cpfw.sku,
-			cpfw.name,
-			cp_lp.value,
-			cpfc.price as consumer_price,
-			cpfw.unit_msrp as wholesale_unit_price
-FROM		catalog_product_flat_3 cpfw
-LEFT JOIN	catalog_product_entity_int cp_lp ON cp_lp.entity_id = cpf.entity_id AND cp_lp.attribute_id = 390
-LEFT JOIN	catalog_product_flat_1 cpfc ON cpfc.entity_id = cp_lp.value</string>
-		<string>SELECT		cpf.sku,
-			cpf.name,
-			cp_st.value
-FROM		catalog_product_flat_3 cpf
-LEFT JOIN	catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 390</string>
-		<string>#Purchasing Case Cost
-SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
-		  cpf.sku as sku,
-		  cpf.name as description,
-          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
-          cpf.grommet_category_value as category,
-          ROUND(cpf.cost,2) as catalog_cost,
-          ROUND(pc.cost,2) as unit_po_cost,
-          cpf.price,
-          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
-          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
-          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
-          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
-          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued,
-          cpf.cost - pc.cost as cost_difference
-FROM       catalog_product_flat_1 cpf/* product info*/
-LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
-LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
-LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
-LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
-LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
-LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
-LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
-WHERE      cpf.type_id = 'simple'
-AND		   si.store_id = 1
-AND		   cp_st.value = 1
-AND		   cpf.shipwire_vendor_id = 666
-AND		   pc.type = 1
-Group BY   sku
-Having cost_difference !=0</string>
-		<string>#Purchasing Case Cost
-SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
-		  cpf.sku as sku,
-		  cpf.name as description,
-          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
-          cpf.grommet_category_value as category,
-          ROUND(cpf.cost,2) as catalog_cost,
-          ROUND(pc.cost,2) as unit_po_cost,
-          cpf.price,
-          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
-          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
-          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
-          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
-          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued,
-          cpf.cost - pc.cost as cost_difference
-FROM       catalog_product_flat_1 cpf/* product info*/
-LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
-LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
-LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
-LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
-LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
-LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
-LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
-WHERE      cpf.type_id = 'simple'
-AND		   si.store_id = 1
-AND		   cp_st.value = 1
-AND		   cpf.shipwire_vendor_id = 666
-AND		   pc.type = 1
-Group BY   sku
-Having difference !=0</string>
-		<string>#Purchasing Case Cost
-SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
-		  cpf.sku as sku,
-		  cpf.name as description,
-          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
-          cpf.grommet_category_value as category,
-          ROUND(cpf.cost,2) as catalog_cost,
-          ROUND(pc.cost,2) as unit_po_cost,
-          cpf.price,
-          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
-          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
-          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
-          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
-          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued,
-          cpf.cost - pc.cost as cost_difference
-FROM       catalog_product_flat_1 cpf/* product info*/
-LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
-LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
-LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
-LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
-LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
-LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
-LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
-WHERE      cpf.type_id = 'simple'
-AND		   si.store_id = 1
-AND		   cp_st.value = 1
-AND		   cpf.shipwire_vendor_id = 666
-AND		   pc.type = 1
-Group BY   sku</string>
-		<string>#Purchasing Case Cost
-SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
-		  cpf.sku as sku,
-		  cpf.name as description,
-          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
-          cpf.grommet_category_value as category,
-          ROUND(cpf.cost,2) as catalog_cost,
-          ROUND(pc.cost,2) as unit_po_cost,
-          cpf.price,
-          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
-          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
-          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
-          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
-          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued
-FROM       catalog_product_flat_1 cpf/* product info*/
-LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
-LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
-LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
-LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
-LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
-LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
-LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
-WHERE      cpf.type_id = 'simple'
-AND		   si.store_id = 1
-AND		   cp_st.value = 1
-AND		   cpf.shipwire_vendor_id = 666
-AND		   pc.type = 1
-Group BY   sku</string>
-		<string>#Purchasing Case Cost
-SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
-		  cpf.sku as sku,
-		  cpf.name as description,
-          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
-          cpf.grommet_category_value as category,
-          ROUND(cpf.cost,2) as catalog_cost,
-          ROUND(pc.cost,2) as unit_po_cost,
-          ROUND(pc.cost/pc.qty,2) as unit_po_cost_divide,
-          cpf.price,
-          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
-          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
-          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
-          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
-          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued
-FROM       catalog_product_flat_1 cpf/* product info*/
-LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
-LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
-LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
-LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
-LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
-LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
-LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
-WHERE      cpf.type_id = 'simple'
-AND		   si.store_id = 1
-AND		   cp_st.value = 1
-AND		   cpf.shipwire_vendor_id = 666
-AND		   pc.type = 1
-Group BY   sku</string>
-		<string>#Purchasing Case Cost
-SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
-		  cpf.sku as sku,
-		  cpf.name as description,
-          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,          
-          cpf.grommet_category_value as category,
-          ROUND(cpf.cost,2) as catalog_cost,
-          ROUND(pc.cost) as unit_po_cost,
-          ROUND(pc.cost/pc.qty,2) as unit_po_cost_divide,
-          cpf.price,
-          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as avg_product_margin,		  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100)/(cpf.price))), 4) as avg_kpi_weighted_margin, /* average margin including media allowance and return allowance*/  
-		  ROUND(AVG(1-(cpf.cost * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100)/(cpf.price))), 4) as avg_full_weighted_margin, /* average margin including media allowance, return allowance and early pmt disc*/	  
-          ROUND(SUM(CASE WHEN YEAR(CONVERT_TZ(si.period,'UTC','America/New_York')) = 2017 AND cpf.type_id = 'simple' THEN si.qty * cpf.price ELSE 0 END),2) as 2017_rev,
-          ROUND(SUM(si.qty * cpf.price),2) as lifetime_rev,
-          CASE WHEN cp_st.value = 1 THEN "Enabled" ELSE "Disabled" END as status,
-          CASE WHEN cpf.is_discontinued = 1 THEN "Yes" ELSE "No" END as discontinued
-FROM       catalog_product_flat_1 cpf/* product info*/
-LEFT JOIN  sales_order_item_aggregated si ON si.product_id = cpf.entity_id
-LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
-LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
-LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
-LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
-LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
-LEFT JOIN  catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
-LEFT JOIN  admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
-WHERE      cpf.type_id = 'simple'
-AND		   si.store_id = 1
-AND		   cp_st.value = 1
-AND		   cpf.shipwire_vendor_id = 666
-AND		   pc.type = 1
-Group BY   sku</string>
-		<string>Select table_name, column_name
-        from information_Schema.columns
-        where column_Name like '%details%'</string>
-		<string>Select table_name, column_name
-        from information_Schema.columns
-        where column_Name like '%linked%'</string>
-		<string>Select table_name, column_name
-        from information_Schema.columns
-        where column_Name like '%link%'</string>
-		<string>SELECT DISTINCT link_type_id
-FROM	catalog_product_link</string>
-		<string>SELECT *
-FROM	catalog_product_link</string>
-		<string>SELECT    	o.customer_email as customer_id,
-          	o.increment_id as order_number,
-          	DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) as transaction_date,
-          	sf.sku as sku_number,
-      	  	FORMAT(SUM(CASE WHEN sf.product_type = 'simple' THEN sf.qty_ordered * cpf.price ELSE 0 END), 2) as sku_revenue,
-      	  	FORMAT(SUM(CASE WHEN sf.base_discount_amount &gt; 0 THEN sf.base_discount_amount ELSE 0 END), 2) as discount_amount  
-FROM      	sales_flat_order o
-LEFT JOIN   frauddetection_order_assessment f ON f.order_id = o.entity_id
-LEFT JOIN 	sales_flat_order_item sf ON sf.order_id = o.entity_id
-LEFT JOIN	catalog_product_flat_1 cpf ON cpf.entity_id = sf.product_id
-WHERE		o.store_id = 1
-AND			o.status = 'complete'
-AND			(f.severity != 9
-OR			f.severity IS NULL)
-AND			DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) BETWEEN '2016-03-01' AND '2016-12-31'
-GROUP BY 	o.increment_id, sf.sku
-ORDER BY 	customer_id ASC</string>
 	</array>
 	<key>rdbms_type</key>
 	<string>mysql</string>
