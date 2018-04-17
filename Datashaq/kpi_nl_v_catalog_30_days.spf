@@ -1,0 +1,2256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ContentFilters</key>
+	<dict/>
+	<key>auto_connect</key>
+	<true/>
+	<key>data</key>
+	<dict>
+		<key>connection</key>
+		<dict>
+			<key>database</key>
+			<string>bi-test</string>
+			<key>host</key>
+			<string>datashack.production.thegrommet.com</string>
+			<key>kcid</key>
+			<string>-6998448571925772934</string>
+			<key>name</key>
+			<string>Datashaq</string>
+			<key>port</key>
+			<integer>3306</integer>
+			<key>rdbms_type</key>
+			<string>mysql</string>
+			<key>sslCACertFileLocation</key>
+			<string></string>
+			<key>sslCACertFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslCertificateFileLocation</key>
+			<string></string>
+			<key>sslCertificateFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslKeyFileLocation</key>
+			<string></string>
+			<key>sslKeyFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>type</key>
+			<string>SPTCPIPConnection</string>
+			<key>useSSL</key>
+			<integer>0</integer>
+			<key>user</key>
+			<string>juliane</string>
+		</dict>
+		<key>session</key>
+		<dict>
+			<key>connectionEncoding</key>
+			<string>latin1</string>
+			<key>contentFilter</key>
+			<dict/>
+			<key>contentPageNumber</key>
+			<integer>1</integer>
+			<key>contentSelection</key>
+			<data>
+			YnBsaXN0MDDUAQIDBAUGNjdYJHZlcnNpb25YJG9iamVjdHNZJGFy
+			Y2hpdmVyVCR0b3ASAAGGoK0HCBUWFxgZHSQoLDA0VSRudWxs0wkK
+			CwwQFFdOUy5rZXlzWk5TLm9iamVjdHNWJGNsYXNzow0OD4ACgAOA
+			BKMREhOABYAGgAiADFR0eXBlVHJvd3NUa2V5c18QJlNlbGVjdGlv
+			bkRldGFpbFR5cGVQcmltYXJ5S2V5ZWREZXRhaWxz0wkKCxobHKCg
+			gAfSHh8gIVokY2xhc3NuYW1lWCRjbGFzc2VzXxATTlNNdXRhYmxl
+			RGljdGlvbmFyeaMgIiNcTlNEaWN0aW9uYXJ5WE5TT2JqZWN00goL
+			JSehJoAJgAvSCykqK1lOUy5zdHJpbmeACl8QD3dlZWtfc3RhcnRf
+			ZGF0ZdIeHy0uXxAPTlNNdXRhYmxlU3RyaW5noy0vI1hOU1N0cmlu
+			Z9IeHzEyXk5TTXV0YWJsZUFycmF5ozEzI1dOU0FycmF50h4fIjWi
+			IiNfEA9OU0tleWVkQXJjaGl2ZXLRODlUZGF0YYABAAgAEQAaACMA
+			LQAyADcARQBLAFIAWgBlAGwAcAByAHQAdgB6AHwAfgCAAIIAhwCM
+			AJEAugDBAMIAwwDFAMoA1QDeAPQA+AEFAQ4BEwEVARcBGQEeASgB
+			KgE8AUEBUwFXAWABZQF0AXgBgAGFAYgBmgGdAaIAAAAAAAACAQAA
+			AAAAAAA6AAAAAAAAAAAAAAAAAAABpA==
+			</data>
+			<key>contentSortColIsAsc</key>
+			<true/>
+			<key>contentViewport</key>
+			<string>{{0, 0}, {1022, 879}}</string>
+			<key>isToolbarVisible</key>
+			<true/>
+			<key>queries</key>
+			<string>DELIMITER ;;
+
+#1 Drop table
+drop table kpi_nl_v_catalog_30_days
+;;
+
+#2 Create Staging Table
+CREATE TABLE IF NOT EXISTS kpi_nl_v_catalog_30_days (
+	year INTEGER NOT NULL,
+	week INTEGER NOT NULL,
+	week_start_date DATE NOT NULL PRIMARY KEY,
+	nl_percent_of_catalog DECIMAL(12,4) NOT NULL,
+	yoy_growth DECIMAL(12,4) NOT NULL
+	)
+;;
+
+DROP PROCEDURE if exists kpi_nl_v_catalog_30_days
+;;
+
+CREATE PROCEDURE kpi_nl_v_catalog_30_days()
+BEGIN
+
+#3 Replace data into kpi_wholesale_aov table
+REPLACE INTO 	kpi_nl_v_catalog_30_days(
+	year,
+	week,
+	week_start_date,
+	nl_percent_of_catalog,
+	yoy_growth)
+	
+
+# NL vs Catalog Revenue Rolling 30 Days #
+SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = si.order_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) + 1				
+WHERE			si.store_id = 1
+AND				YEAR(si.created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week;
+END ;;
+
+
+
+
+</string>
+			<key>table</key>
+			<string>kpi_nl_v_catalog_30_days</string>
+			<key>view</key>
+			<string>SP_VIEW_CUSTOMQUERY</string>
+			<key>windowVerticalDividerPosition</key>
+			<real>258</real>
+		</dict>
+	</dict>
+	<key>encrypted</key>
+	<false/>
+	<key>format</key>
+	<string>connection</string>
+	<key>queryFavorites</key>
+	<array/>
+	<key>queryHistory</key>
+	<array>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = si.order_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) + 1				
+WHERE			si.store_id = 1
+AND				YEAR(si.created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = si.order_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			si.store_id = 1
+AND				YEAR(si.created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			si.store_id = 1
+AND				YEAR(si.created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.parent_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			si.store_id = 1
+AND				YEAR(si.created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string># NL vs Catalog Revenue Rolling 30 Days #
+SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.parent_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			si.store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.parent_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			i.store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.parent_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.order_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.parent_id
+LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		magento.sales_flat_order o ON o.entity_id = i.parent_id
+				LEFT JOIN		magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				AND  		(f.severity !=9 or f.severity is null)
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at) - 1				
+WHERE			store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+AND  		   (f.severity !=9 or f.severity is null)
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) + 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at)				
+WHERE			store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) - 1 as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at)				
+WHERE			store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	magento.sales_flat_order_item si
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       magento.catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          magento.sales_flat_order_item i
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       magento.catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at)				
+WHERE			store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT			YEAR(si.created_at) as year,        
+				WEEK(si.created_at) as week,
+				DATE(MIN(si.created_at)) as week_start,
+              	FORMAT(SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END)/SUM(base_price * qty_ordered), 4) as percent_rev,
+              	FORMAT((SUM(CASE WHEN DATE(si.created_at) BETWEEN t.launch_date AND DATE_ADD(t.launch_date, INTERVAL 29 DAY) THEN base_price * qty_ordered ELSE 0 END) - y.launch_rev2)/y.launch_rev2, 4) as yoy_growth              	
+FROM          	sales_flat_order_item si
+LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           
+            	FROM       catalog_product_flat_1 cpf
+				WHERE      cpf.type_id = 'grouped'
+				GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(si.sku,1,LOCATE('-', si.sku)-1)
+LEFT JOIN		(SELECT		YEAR(i.created_at) as year_yoy,        
+							WEEK(i.created_at) as week_yoy,
+              				ROUND(SUM(CASE WHEN DATE(i.created_at) BETWEEN t.launch AND DATE_ADD(t.launch, INTERVAL 29 DAY) THEN i.base_price * i.qty_ordered ELSE 0 END), 2) as launch_rev2,
+              				ROUND(SUM(i.base_price * i.qty_ordered),0) as total_rev2
+				FROM          sales_flat_order_item i
+				LEFT JOIN		(SELECT		SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+								CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch           
+            					FROM       catalog_product_flat_1 cpf
+								WHERE      cpf.type_id = 'grouped'
+								GROUP BY   sku_prefix) t ON t.sku_prefix = SUBSTRING(i.sku,1,LOCATE('-', i.sku)-1)
+				WHERE			i.store_id = 1	
+				AND				YEAR(i.created_at) = YEAR(CURDATE()) - 1
+				GROUP BY		week_yoy, year_yoy
+				ORDER BY		year_yoy, week_yoy) y ON y.week_yoy = WEEK(si.created_at)				
+WHERE			store_id = 1
+AND				YEAR(created_at) = YEAR(CURDATE())
+GROUP BY		week, year
+ORDER BY		year, week</string>
+		<string>SELECT		date(created_at) as date
+FROM 		sales_payment_transaction
+WHERE		store_id = 3
+AND			date(CONVERT_TZ(created_at,'UTC','America/New_York')) &gt;= '2017-01-01'
+GROUP BY 	date</string>
+		<string>SELECT		date(created_at) as date,
+			SUM(grand_total)
+FROM 		sales_payment_transaction
+WHERE		store_id = 3
+AND			date(CONVERT_TZ(created_at,'UTC','America/New_York')) &gt;= '2017-01-01'
+GROUP BY 	date</string>
+		<string>SELECT		date(created_at) as date,
+			SUM(grand_total)
+FROM 		sales_flat_invoice
+WHERE		store_id = 3
+AND			date(CONVERT_TZ(created_at,'UTC','America/New_York')) &gt;= '2017-01-01'
+GROUP BY 	date</string>
+		<string>SELECT		date(created_at) as date
+FROM 		sales_flat_invoice
+WHERE		store_id = 3
+AND			date(CONVERT_TZ(created_at,'UTC','America/New_York')) &gt;= '2017-01-01'
+GROUP BY 	date</string>
+		<string>SELECT		date(created_at)
+FROM 		sales_flat_invoice
+WHERE		store_id = 3
+AND			date(CONVERT_TZ(created_at,'UTC','America/New_York')) = '2017-04-16'</string>
+		<string>SELECT		date(created_at)
+FROM 		sales_flat_invoice
+WHERE		store_id = 3
+AND			date(CONVERT_TZ(created_at,'UTC','America/New_York') = '2017-04-16'</string>
+		<string>SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = '2017-04-16'
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE</string>
+		<string>SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = '2017-04-16'
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE</string>
+		<string>SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) &gt;= '2017-01-01'
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE</string>
+		<string>SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = DATE_SUB(CURDATE() - 1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE</string>
+		<string>SELECT		COALESCE(d.date) as date,
+			COALESCE(ROUND(d.wholesale_rev,0)) as wholesale_rev,
+			COALESCE(ROUND(((d.wholesale_rev - d.py_wholesale_rev) / d.py_wholesale_rev) * 100, 2)) as YOY,
+			COALESCE(ROUND(d.ws_magento_only_budget,0)) as wholesale_magento_only_budget,
+			COALESCE(ROUND(((d.wholesale_rev / d.ws_magento_only_budget) - 1) * 100,2)) as percent_of_budget,
+			COALESCE(ROUND(d.net_aov,2)) as aov,
+			COALESCE(ROUND(d.orders,0)) as orders
+FROM 		(SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = DATE_SUB(CURDATE() - 1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE) d</string>
+		<string>SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = DATE_SUB(CURDATE() - 1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE) d</string>
+		<string>SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = DATE_SUB(CURDATE() - 1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE) d)</string>
+		<string>SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = DATE_SUB(CURDATE() - 1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE) d) dd</string>
+		<string>SELECT		dd.date,
+			dd.wholesale_rev,
+			dd.yoy,
+			dd.wholesale_magento_only_budget,
+			dd.percent_of_budget,
+			dd.aov,
+			dd.orders,
+			mar.product_margin
+FROM			
+(SELECT		COALESCE(d.date) as date,
+			COALESCE(ROUND(d.wholesale_rev,0)) as wholesale_rev,
+			COALESCE(ROUND(((d.wholesale_rev - d.py_wholesale_rev) / d.py_wholesale_rev) * 100, 2)) as YOY,
+			COALESCE(ROUND(d.ws_magento_only_budget,0)) as wholesale_magento_only_budget,
+			COALESCE(ROUND(((d.wholesale_rev / d.ws_magento_only_budget) - 1) * 100,2)) as percent_of_budget,
+			COALESCE(ROUND(d.net_aov,2)) as aov,
+			COALESCE(ROUND(d.orders,0)) as orders
+FROM 		(SELECT    	DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+						DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	2018_daily_budget b ON b.budget_date = DATE(o.created_at)
+			LEFT JOIN	(SELECT		DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as day_of_year,
+									DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+									date(t.created_at) as transaction_date,
+									date(i.created_at) as invoice_date,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */ 
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = DATE_SUB(CURDATE() - 1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	DATE) py ON py.day_of_year = DAYOFYEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	DATE) d) dd
+JOIN			
+
+(SELECT		date(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as date,
+			SUM(cpf.price * ii.qty) as revenue,
+			SUM(cpf.cost * ii.qty) as cogs,
+			SUM(ii.qty) as units,
+			ROUND((1 - (SUM(cpf.cost * ii.qty) / SUM(cpf.price * ii.qty))) * 100, 2) as product_margin
+FROM      	magento.sales_flat_invoice_item ii
+LEFT JOIN	magento.sales_flat_invoice i ON i.entity_id = ii.parent_id
+LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+LEFT JOIN	magento.catalog_product_flat_3 cpf ON cpf.entity_id = ii.product_id
+LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+WHERE		DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) = CURDATE() - 1
+AND			cpf.type_id = 'simple'
+AND  		(f.severity !=9 or f.severity is null)
+AND			i.state = 2
+AND			i.store_id = 3
+GROUP BY	date) mar ON mar.date = dd.date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%voyage pillow%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-04-11'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%imperium shaving%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-04-12'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%sleep crown%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-04-12'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%embr wave%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-04-13'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT Date(convert_tz(created_at,'UTC','America/New_York')) as date,
+       SUBSTRING(name,1,LOCATE(':',name)-1) as name,
+       base_price,
+       COUNT(DISTINCT order_id) as orders,
+       sum(IF(product_type = 'Simple', qty_ordered, 0)) as units,
+       sum(base_price * qty_ordered) as revenue
+FROM   sales_flat_order_item
+WHERE  SUBSTRING(name,1,LOCATE(':',name)-1) LIKE '%viabuff%'
+AND    DATE(convert_tz(created_at,'UTC','America/New_York')) = '2018-04-13'
+AND    store_id = 1
+GROUP BY date</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN ps.terms_media_allowance WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN sv.terms_retail_media_allowance ELSE 'No' END as media_allowance,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                           CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN ps.terms_early_discount Else 'No' END as early_payment_discount,
+                           IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN ps.terms_media_allowance WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN sv.terms_retail_media_allowance ELSE 'No' END as media_allowance,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                           CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN ps.terms_early_discount Else 'No' END as early_discount,
+                           IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN ps.terms_media_allowance WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN sv.terms_retail_media_allowance ELSE 'No' END as media_allowance,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN ps.terms_return_discount_allowance WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN sv.return_defectives ELSE 'No' END as defective_returns,
+                           CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN ps.terms_early_discount Else 'No' END as early_discount,
+                           IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                           CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN 'Yes' Else 'No' END as early_discount,
+                           IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                           CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN 'Yes' Else 'No' END as early_discount,
+                           IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT    cpf.sku as 'Sku',
+          SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          cpf.name as 'Name',
+          ea.value as grommet_category,
+          t.launch_date,
+          cpf.price,
+          cpf.cost,
+          ci.qty,
+          CASE cpf.shipwire_vendor_id WHEN 666 THEN ci.qty*cpf.cost ELSE 'Dropship' END AS 'Balance',
+          CASE WHEN ci.manage_stock = 0 AND ci.use_config_manage_stock = 0 AND cpf.shipwire_vendor_id != 666 THEN 1 WHEN ci.qty &gt;10000 AND cpf.shipwire_vendor_id != 666 THEN 1 ELSE ci.is_in_stock END AS 'Stock Status',
+          cpf.is_discontinued,
+          cpu.value as upc,
+          CONCAT(au.firstname, ' ', au.lastname) as mpt_owner,
+          SUBSTRING(cpf.name, 1, LOCATE(':', cpf.name)-1) as grom_prefix,
+          CONCAT(sv.name, ' - ', cpf.shipwire_vendor_id) as shipwire_vendor_id,
+          CASE cpf.shipwire_vendor_id WHEN 666 THEN 1 ELSE 0 END AS 'Drop/Inv',
+          CASE cp_st.value WHEN 1 THEN 'Enabled' WHEN 0 THEN 'Disabled' Else 'Disabled' END AS 'status',
+          SUBSTRING_INDEX(SUBSTRING_INDEX(cpf.sku,'-',2),'-',-1) as 'Type'
+FROM      catalog_product_flat_1 cpf
+LEFT JOIN cataloginventory_stock_item ci ON cpf.entity_id = ci.product_id
+LEFT JOIN catalog_product_entity_varchar cpv ON cpv.entity_id = cpf.entity_id AND cpv.attribute_id = 372 /* fulfillment_type */
+LEFT JOIN catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN catalog_product_entity_int cp_mpt ON cp_mpt.entity_id = cpf.entity_id AND cp_mpt.attribute_id = 409 /* mpt owner */
+JOIN      catalog_product_entity_int cp_api ON cp_api.entity_id = cpf.entity_id AND cp_api.attribute_id = 376 /* api_sync_enabled */
+JOIN      shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Shipwire vendor name */
+LEFT JOIN admin_user au ON au.user_id = cp_mpt.value /* MPT Owner name */
+LEFT JOIN eav_attribute_option_value ea ON ea.option_id = cpf.grommet_category /* grommet_category */
+LEFT JOIN catalog_product_entity_varchar cpu ON cpu.entity_id = cpf.entity_id AND cpu.attribute_id = 332 /* UPC number */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'simple'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'Simple'
+AND       cpf.sku NOT LIKE ('%grouped%')
+AND       cpf.grommet_category_value NOT LIKE ('Phil%')
+GROUP BY  cpf.sku</string>
+		<string>#captured_date
+SELECT		YEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as year,
+			MONTH(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as month,
+			SUM(cpf.price * ii.qty) as revenue,
+			SUM(cpf.cost * ii.qty) as cogs,
+			SUM(ii.qty) as units,
+			ROUND((1 - (SUM(cpf.cost * ii.qty) / SUM(cpf.price * ii.qty))) * 100, 2) as margin
+FROM      	magento.sales_flat_invoice_item ii
+LEFT JOIN	magento.sales_flat_invoice i ON i.entity_id = ii.parent_id
+LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+LEFT JOIN	magento.catalog_product_flat_3 cpf ON cpf.entity_id = ii.product_id
+LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+WHERE		DATE(CONVERT_TZ(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at),'UTC','America/New_York')) BETWEEN '2017-01-01' AND '2017-12-31'
+AND			cpf.type_id = 'simple'
+AND  		(f.severity !=9 or f.severity is null)
+AND			i.state = 2
+AND			i.store_id = 3
+GROUP BY	month, year</string>
+		<string>SELECT		m.month,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	month(soia.created_at) as month,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						WHERE 		date(soia.created_at) BETWEEN '2017-01-01' AND '2017-12-31'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	month, cpf.sku) m
+			GROUP BY	month</string>
+		<string>SELECT		m.month,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	month(soia.created_at) as month,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						WHERE 		date(soia.created_at) &gt;= '2017-01-01'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	month, cpf.sku) m
+			GROUP BY	month</string>
+		<string>SELECT		m.month,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	month(soia.created_at) as month,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						WHERE 		date(soia.created_at) &gt;= '2017-01-01'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	month, cpf.sku</string>
+		<string>#YTD margin 
+SELECT		mm.year,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts
+			FROM		(SELECT  	year(t.launch_date) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(cpf.price) as rev,
+									SUM(cpf.cost) as cost,
+									SUM(((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.catalog_product_flat_1 cpf
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    							SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date          				FROM     catalog_product_flat_1 cpf
+           							WHERE    cpf.type_id = 'grouped'
+            						GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+						WHERE 		t.launch_date &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			cp_st.value = 1
+						AND			t.launch_date IS NOT NULL
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm</string>
+		<string>SELECT  	year(t.launch_date) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(cpf.price) as rev,
+									SUM(cpf.cost) as cost,
+									SUM(((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.catalog_product_flat_1 cpf
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    							SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date          				FROM     catalog_product_flat_1 cpf
+           							WHERE    cpf.type_id = 'grouped'
+            						GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+						WHERE 		t.launch_date &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			cp_st.value = 1
+						AND			t.launch_date IS NOT NULL
+						Group BY  	year, cpf.sku</string>
+		<string>SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts
+			FROM		(SELECT  	year(t.launch_date) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(cpf.price) as rev,
+									SUM(cpf.cost) as cost,
+									SUM(((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.catalog_product_flat_1 cpf
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    							SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date          				FROM     catalog_product_flat_1 cpf
+           							WHERE    cpf.type_id = 'grouped'
+            						GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+						WHERE 		t.launch_date &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			cp_st.value = 1
+						AND			t.launch_date IS NOT NULL
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm</string>
+		<string>SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts
+			FROM		(SELECT  	year(t.launch_date) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(cpf.price) as rev,
+									SUM(cpf.cost) as cost,
+									SUM(((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.catalog_product_flat_1 cpf
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    							SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date          				FROM     catalog_product_flat_1 cpf
+           							WHERE    cpf.type_id = 'grouped'
+            						GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+						WHERE 		t.launch_date &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			cp_st.value = 1
+						AND			t.launch_date IS NOT NULL
+						Group BY  	year, cpf.sku</string>
+		<string>#YTD margin 
+SELECT		mm.year,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	year(soia.created_at) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						WHERE 		date(soia.created_at) &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			cp_st.value = 1
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm
+ORDER BY	mm.year DESC</string>
+		<string>#YTD margin 
+SELECT		mm.year,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	year(soia.created_at) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						WHERE 		date(soia.created_at) &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			cp_st.value = 1
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm</string>
+		<string>#YTD margin 
+SELECT		mm.year,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	year(soia.created_at) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						WHERE 		date(soia.created_at) &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm</string>
+		<string>#YTD margin 
+SELECT		mm.year,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	year(t.launch_date) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(cpf.price) as rev,
+									SUM(cpf.cost) as cost,
+									SUM(((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.catalog_product_flat_1 cpf
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    							SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date          				FROM     catalog_product_flat_1 cpf
+           							WHERE    cpf.type_id = 'grouped'
+            						GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+						WHERE 		t.launch_date &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			cp_st.value = 1
+						AND			t.launch_date IS NOT NULL
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm</string>
+		<string>#YTD margin 
+SELECT		mm.year,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.year,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	year(t.launch_date) as year,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(cpf.price) as rev,
+									SUM(cpf.cost) as cost,
+									SUM(((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.catalog_product_flat_1 cpf
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+						LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    							SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    							CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date          				FROM     catalog_product_flat_1 cpf
+           							WHERE    cpf.type_id = 'grouped'
+            						GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+						WHERE 		t.launch_date &lt;= '2018-03-31'
+						AND  		cpf.type_id = 'simple'
+						AND			cp_st.value = 1
+						AND			t.launch IS NOT NULL
+						Group BY  	year, cpf.sku) m
+			GROUP BY	year)mm</string>
+		<string>SELECT year(t.launch) as year,
+       count(t.sku_prefix) as grommet_count,
+       sum(if(t.media_allowance = 'Yes',1,0))/count(t.sku_prefix) as '% with Media Allowance',
+       avg(t.weighted_margin) as weighted_margin,
+       sum(if(t.returnability = 'Yes',1,0))/count(t.sku_prefix) as returnability,
+       sum(if(t.early_discount = 'Yes',1,0))/sum(if(t.type = 'Inv',1,0)) as early_discount,
+       sum(if(t.defective_returns = 'Yes',1,0))/count(t.sku_prefix) as defective_returns
+FROM (
+       SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                 SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+                 CASE WHEN cpf.shipwire_vendor_id = 666 THEN 'Inv' ELSE 'Drop' END as type, 
+                 DATE(min(cpf.news_from_date)) as launch,
+          		 ROUND(AVG(1-(cpf.cost/cpf.price)),4) as margin,
+				 ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+                 IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+                 IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN 'Yes' Else 'No' END as early_discount
+       FROM      catalog_product_flat_1 cpf/* product info*/
+       LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+       LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+       LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+       LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+       LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+       WHERE     cpf.type_id = 'Simple'
+       AND       cp_st.value = 1
+       Group BY  sku_prefix) t
+WHERE		t.launch IS NOT NULL
+AND			t.launch &lt;= '2017-06-30'
+Group BY  year
+ORDER BY  year desc</string>
+		<string>SELECT year(t.launch) as year,
+       count(t.sku_prefix) as grommet_count,
+       sum(if(t.media_allowance = 'Yes',1,0))/count(t.sku_prefix) as '% with Media Allowance',
+       avg(t.weighted_margin) as weighted_margin,
+       sum(if(t.returnability = 'Yes',1,0))/count(t.sku_prefix) as returnability,
+       sum(if(t.early_discount = 'Yes',1,0))/sum(if(t.type = 'Inv',1,0)) as early_discount,
+       sum(if(t.defective_returns = 'Yes',1,0))/count(t.sku_prefix) as defective_returns
+FROM (
+       SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                 SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+                 CASE WHEN cpf.shipwire_vendor_id = 666 THEN 'Inv' ELSE 'Drop' END as type, 
+                 DATE(min(cpf.news_from_date)) as launch,
+          		 ROUND(AVG(1-(cpf.cost/cpf.price)),4) as margin,
+				 ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+                 IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+                 IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN 'Yes' Else 'No' END as early_discount
+       FROM      catalog_product_flat_1 cpf/* product info*/
+       LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+       LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+       LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+       LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+       LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+       WHERE     cpf.type_id = 'Simple'
+       AND       cp_st.value = 1
+       Group BY  sku_prefix) t
+WHERE		t.launch IS NOT NULL
+AND			t.launch &lt;= '2017-06-30'
+Group BY  year
+ORDER BY  year desc</string>
+		<string>SELECT year(t.launch) as year,
+       count(t.sku_prefix) as grommet_count,
+       sum(if(t.media_allowance = 'Yes',1,0))/count(t.sku_prefix) as '% with Media Allowance',
+       avg(t.weighted_margin) as weighted_margin,
+       sum(if(t.returnability = 'Yes',1,0))/count(t.sku_prefix) as returnability,
+       sum(if(t.early_discount = 'Yes',1,0))/sum(if(t.type = 'Inv',1,0)) as early_discount,
+       sum(if(t.defective_returns = 'Yes',1,0))/count(t.sku_prefix) as defective_returns
+FROM (
+       SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                 SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+                 CASE WHEN cpf.shipwire_vendor_id = 666 THEN 'Inv' ELSE 'Drop' END as type, 
+                 DATE(min(cpf.news_from_date)) as launch,
+          		 ROUND(AVG(1-(cpf.cost/cpf.price)),4) as margin,
+				 ROUND(AVG(1-((cpf.cost * soia.qty) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (soia.qty * cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+                 IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+                 IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability_select = 2 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.returns_accepted = 1 THEN 'Yes' WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_returnability IS NOT NULL AND ps.terms_returnability_select IS NULL THEN 'Yes' Else 'No' END as returnability,
+                 CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_early_discount &gt; 0 THEN 'Yes' Else 'No' END as early_discount
+       FROM      catalog_product_flat_1 cpf/* product info*/
+       LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+       LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+       LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+       LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+       LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+       WHERE     cpf.type_id = 'Simple'
+       AND       cp_st.value = 1
+       Group BY  sku_prefix) t
+WHERE		t.launch IS NOT NULL
+AND			t.launch &lt;= '2017-06-30'
+Group BY  year
+ORDER BY  year desc</string>
+		<string>SELECT		DATE(t.revenue_recognized_at) as DATE,
+			SUM(t.grand_total) as rev
+FROM		(SELECT		o.increment_id AS `order_id`,
+			CONVERT_TZ(o.created_at,'UTC','America/New_York') AS `order_created_at (Eastern)`,
+			i.increment_id AS `invoice_id`,
+			o.status,
+			CONVERT_TZ(i.created_at,'UTC','America/New_York') AS `invoice_created_at (Eastern)`,
+			IF(p.`method`='wholesale_terms' AND p.`additional_information` LIKE '%prepaid%', CONCAT(p.`method`, '_prepaid'), p.`method`) AS `payment_method`,
+			i.subtotal,
+			i.shipping_amount,
+			i.tax_amount,
+			i.discount_amount,
+			i.grand_total,
+			CONVERT_TZ(o.paid_at,'UTC','America/New_York') AS `paid_at (Eastern)`,
+			IF(p.`method`='wholesale_terms' AND p.`additional_information` NOT LIKE '%prepaid%', CONVERT_TZ(i.created_at,'UTC','America/New_York'), CONVERT_TZ(o.paid_at,'UTC','America/New_York')) AS `revenue_recognized_at`
+FROM 		sales_flat_invoice i
+JOIN 		sales_flat_order o ON i.order_id = o.entity_id
+LEFT JOIN 	sales_flat_order_payment p ON p.parent_id = o.entity_id
+LEFT JOIN	frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */
+WHERE 		i.state != 3 /* 3 = cancelled */
+AND 		(o.status != "canceled" or o.status != 'holded')
+AND 		i.store_id = 3 /* 3 = wholesale */
+AND			(f.severity != 9 or f.severity is null)) t /* 9 = fraud */
+WHERE		DATE(t.revenue_recognized_at) &gt;= '2017-01-01'
+GROUP BY 	DATE
+ORDER BY	DATE ASC</string>
+		<string>SELECT		date(CURDATE()-1) as as_of_date,
+			dd.year,
+			dd.month,
+			dd.wholesale_rev,
+			dd.yoy,
+			dd.wholesale_budget,
+			dd.percent_of_budget,
+			dd.aov,
+			dd.orders,
+			mar.product_margin
+FROM			
+(SELECT		COALESCE(d.year) as year,
+			COALESCE(d.month) as month,
+			COALESCE(ROUND(d.wholesale_rev,0)) as wholesale_rev,
+			COALESCE(ROUND(((d.wholesale_rev - d.py_wholesale_rev) / d.py_wholesale_rev) * 100, 2)) as YOY,
+			COALESCE(ROUND(d.ws_budget,0)) as wholesale_budget,
+			COALESCE(ROUND(((d.wholesale_rev / d.ws_budget) - 1) * 100,2)) as percent_of_budget,
+			COALESCE(ROUND(d.net_aov,2)) as aov,
+			COALESCE(ROUND(d.orders,0)) as orders
+FROM 		(SELECT    	YEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as year,
+						month(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as month,
+         				SUM(i.grand_total) AS wholesale_rev,
+         				py.py_wholesale_rev,
+         				b.ws_magento_only_budget as ws_budget,
+         				AVG(i.grand_total) AS net_aov,
+         				COUNT(DISTINCT o.entity_id) as orders
+			FROM      	magento.sales_flat_invoice i
+			LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+			LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+			LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+			LEFT JOIN	(SELECT		YEAR(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as year,
+									Month(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as month,
+         							SUM(i.grand_total) AS py_wholesale_rev
+						FROM 		magento.sales_flat_invoice i
+						LEFT JOIN   magento.sales_flat_order o ON i.order_id = o.entity_id
+						LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* fraud filter */
+						WHERE     	DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) BETWEEN DATE_FORMAT(DATE_SUB(CURDATE()-1, INTERVAL 365 DAY),'%Y-%m-01') AND DATE_SUB(CURDATE()-1, INTERVAL 365 DAY)
+						AND  		(f.severity !=9 or f.severity is null)
+						AND			o.status != 'canceled'
+						AND			o.store_id = 3
+						GROUP BY  	month, year) py ON py.month = Month(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			LEFT JOIN	(SELECT		MONTH(budget_date) as month,
+									SUM(ws_magento_only_budget) as ws_magento_only_budget
+						FROM		2018_daily_budget 
+						WHERE     	date(budget_date) BETWEEN DATE_FORMAT(CURDATE()-1,'%Y-%m-01') AND CURDATE() - 1
+						GROUP BY	month) b ON b.month = Month(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at))
+			WHERE 		date(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) BETWEEN DATE_FORMAT(CURDATE()-1,'%Y-%m-01') AND CURDATE() - 1
+			AND  		(f.severity !=9 or f.severity is null)
+			AND			o.status != 'canceled'
+			AND			o.store_id = 3
+			GROUP BY  	month, year) d) dd
+JOIN			
+
+(SELECT		year(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as year,
+			month(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) as month,
+			SUM(cpf.price * ii.qty) as revenue,
+			SUM(cpf.cost * ii.qty) as cogs,
+			SUM(ii.qty) as units,
+			ROUND((1 - (SUM(cpf.cost * ii.qty) / SUM(cpf.price * ii.qty))) * 100, 2) as product_margin
+FROM      	magento.sales_flat_invoice_item ii
+LEFT JOIN	magento.sales_flat_invoice i ON i.entity_id = ii.parent_id
+LEFT JOIN 	magento.sales_flat_order o ON i.order_id = o.entity_id
+LEFT JOIN	magento.catalog_product_flat_3 cpf ON cpf.entity_id = ii.product_id
+LEFT JOIN 	magento.sales_payment_transaction t ON t.order_id = o.entity_id
+LEFT JOIN 	magento.frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+WHERE		DATE(IF(((i.grand_total = 0) AND Isnull(t.created_at)), i.created_at, t.created_at)) BETWEEN DATE_FORMAT(CURDATE()-1,'%Y-%m-01') AND CURDATE() - 1
+AND			cpf.type_id = 'simple'
+AND  		(f.severity !=9 or f.severity is null)
+AND			i.state = 2
+AND			i.store_id = 3
+GROUP BY	month, year) mar ON mar.month = dd.month and mar.year = dd.year</string>
+		<string>SELECT		DATE(so.created_at) as date,
+			SUM(so.base_subtotal) as rev
+FROM 		sales_flat_shipment ss
+LEFT JOIN	sales_flat_order so ON so.entity_id = ss.order_id
+WHERE		ss.store_id = 3
+AND			DATE(CONVERT_TZ(so.created_at,'UTC', 'America/New_York')) &gt;= '2018-04-01'
+GROUP BY	date</string>
+		<string>SELECT		DATE(so.created_at) as date,
+			SUM(so.base_subtotal) as rev
+FROM 		sales_flat_shipment ss
+LEFT JOIN	sales_flat_order so ON so.entity_id = ss.order_id
+WHERE		ss.store_id = 3
+AND			DATE(CONVERT_TZ(ss.created_at,'UTC', 'America/New_York')) &gt;= '2018-04-01'
+GROUP BY	date</string>
+		<string>SELECT		DATE(ss.created_at) as date,
+			SUM(so.base_subtotal) as rev
+FROM 		sales_flat_shipment ss
+LEFT JOIN	sales_flat_order so ON so.entity_id = ss.order_id
+WHERE		ss.store_id = 3
+AND			DATE(CONVERT_TZ(ss.created_at,'UTC', 'America/New_York')) &gt;= '2018-04-01'
+GROUP BY	date</string>
+		<string>SELECT		DATE(ss.created_at) as date,
+			SUM(so.base_subtotal) as rev
+FROM 		sales_flat_shipment ss
+LEFT JOIN	sales_flat_order so ON so.entity_id = ss.order_id
+WHERE		ss.store_id = 3
+AND			DATE(CONVERT_TZ(ss.created_at,'UTC', 'America/New_York')) &gt;= '2018-04-01'</string>
+		<string>SELECT month(CONVERT_TZ(created_at,'UTC','America/New_York')) as month,
+      year(CONVERT_TZ(created_at,'UTC','America/New_York')) as year,
+      date(CONVERT_TZ(created_at,'UTC','America/New_York')) as day,
+      SUBSTRING(sku,1,LOCATE('-',sku)-1) as sku_prefix,
+      IF(SUBSTRING(sku,1,LOCATE('-',sku)-1) = 1074, 'WakaWaka',SUBSTRING(name,1,LOCATE(':',name)-1)) as grom_name,
+      COUNT(DISTINCT order_id) as orders,
+      sum(qty_backordered) as backordered_qty
+FROM   sales_flat_order_item
+WHERE  DATE(CONVERT_TZ(created_at,'UTC','America/New_York')) BETWEEN '2018-04-08' AND '2018-04-14'
+AND    qty_backordered &gt;= 1
+AND    store_id = 1
+GROUP BY sku_prefix, day
+ORDER BY day ASC</string>
+		<string>SELECT     FORMAT(SUM(IF(t.customer_type = 'Existing', 1, 0))/COUNT(DISTINCT IF(t.customer_type = 'Existing', t.customer_email, 0)),2) AS 'Orders/Exist Cust',
+           FORMAT(SUM(IF(t.customer_type = 'New', 1, 0))/COUNT(DISTINCT IF(t.customer_type = 'New', t.customer_email, 0)),2) AS 'Orders/New Cust',
+           FORMAT(COUNT(t.customer_email)/COUNT(DISTINCT t.customer_email),2) AS 'Orders/Cust'
+FROM       sales_flat_order s
+JOIN       (SELECT  customer_email,
+                    IF(MIN(CONVERT_TZ(created_at, 'UTC','America/New_York')) &lt; ('2018-04-15' - INTERVAL 29 DAY),'Existing','New') AS customer_type,
+                    COUNT(*) as number_of_orders
+           FROM     sales_flat_order_grid
+           GROUP BY customer_email) as t ON t.customer_email = s.customer_email
+WHERE      CONVERT_TZ(s.created_at, 'UTC','America/New_York') BETWEEN ('2018-04-15' - INTERVAL 29 DAY) AND '2018-04-15'
+
+AND        store_id = 1</string>
+		<string>SELECT COUNT(wholesale_retailer_id)/COUNT(DISTINCT wholesale_retailer_id) as purchase_rates
+
+FROM   sales_flat_order
+WHERE  CONVERT_TZ(created_at,'UTC','America/New_York') BETWEEN ('2018-04-15' - INTERVAL 29 DAY) AND '2018-04-15'
+AND    store_id = 3</string>
+		<string>SELECT    FORMAT(SUM(soma.price),2) as 'Total Sales',
+          COUNT(DISTINCT soma.sku_prefix) as total_grommets,
+          FORMAT(SUM(soma.price)/COUNT(DISTINCT soma.sku_prefix),2) as average
+
+FROM      sales_order_maker_aggregated soma
+WHERE     soma.period BETWEEN ('2018-04-15' - INTERVAL 29 DAY) AND '2018-04-15'
+AND       soma.store_id = 1</string>
+		<string>#weekly margin 			
+SELECT		mm.week,
+			FORMAT((1-(mm.cost/mm.rev))*100,2) as product_margin,
+			FORMAT((1-(mm.cost_w_discounts/mm.rev))*100,2) as weighted_margin
+FROM		(SELECT		m.week,
+						SUM(m.rev) as rev,
+						SUM(m.cost) as cost,
+						SUM(m.cost_w_discounts) as cost_w_discounts,
+						SUM(m.qty) as qty
+			FROM		(SELECT  	week(soia.created_at) as week,
+									SUBSTRING(cpf.sku,1,LOCATE('-',cpf.sku)-1) as sku_prefix,
+									cpf.sku,
+									cpf.brand_name,
+									SUM(soia.qty_ordered * cpf.price) as rev,
+									SUM(soia.qty_ordered * cpf.cost) as cost,
+									SUM(soia.qty_ordered) as qty,
+									SUM(((cpf.cost * soia.qty_ordered) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0) + IF(cpf.shipwire_vendor_id = 666, ps.terms_early_discount, 0)))/100))) as cost_w_discounts
+						FROM 		magento.sales_flat_order_item soia
+						LEFT JOIN	magento.sales_flat_order so ON so.entity_id = soia.order_id
+						JOIN		magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id
+						LEFT JOIN  	(SELECT * FROM magento.purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+						LEFT JOIN  	magento.purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+						LEFT JOIN  	magento.purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+						LEFT JOIN  	magento.shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+						LEFT JOIN	magento.frauddetection_order_assessment f ON f.order_id = so.entity_id /* fraud filter */
+						WHERE 		date(soia.created_at) &gt;= '2018-01-01'
+						AND  		cpf.type_id = 'simple'
+						AND			soia.store_id = 1
+						AND			so.status != 'canceled'
+						AND			(f.severity != 9 or f.severity is null) /* 9 = fraud */
+						Group BY  	week, cpf.sku) m
+			GROUP BY	week)mm</string>
+		<string>SELECT     	FORMAT(SUM(IF(t.customer_type = 'Existing', s.base_subtotal, 0)), 2) AS 'Exist Sales',
+			FORMAT(COUNT(DISTINCT IF(t.customer_type = 'Existing', t.customer_email, NULL)),0) AS 'Exist Cust',
+			FORMAT(AVG(IF(t.customer_type = 'New', s.base_subtotal, NULL)), 2) AS 'New AOV'
+FROM       sales_flat_order s
+JOIN       (SELECT  customer_email,
+			IF(MIN(CONVERT_TZ(created_at, 'UTC','America/New_York')) &lt; '2018-04-08','Existing','New') AS customer_type,
+			COUNT(*) as number_of_orders
+			FROM     sales_flat_order
+			WHERE    store_id = 1
+			GROUP BY customer_email) t ON t.customer_email = s.customer_email
+WHERE      	date(CONVERT_TZ(s.created_at, 'UTC','America/New_York')) BETWEEN '2018-04-08' AND '2018-04-14'
+AND        	store_id = 1</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          ROUND(AVG(1-(cpf.cost/cpf.price)),4) as margin,
+          ROUND(AVG(1-((cpf.cost) * ((100-(IF(cpf.shipwire_vendor_id = 666, ps.terms_media_allowance, sv.terms_retail_media_allowance) + IF(cpf.shipwire_vendor_id = 666, ps.terms_return_discount_allowance, 0)))/100) / (cpf.price))), 4) as weighted_margin, /* average margin including media allowance and return disc */
+          IF(cpf.shipwire_vendor_id = 666, ps.terms_media_fee, sv.terms_retail_media_fee) as media_fee,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+          IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string>SELECT    	DATE(CONVERT_TZ(o.created_at,'UTC','America/New_York')) AS DATE,
+         	FORMAT(SUM(IF(store_id = 1, (base_subtotal + base_shipping_amount - abs(base_discount_amount - base_gift_cards_amount)) * 0.97, 0)),2) AS consumer_rev
+FROM      	sales_flat_order o
+LEFT JOIN 	frauddetection_order_assessment f ON f.order_id = o.entity_id /* Fraud Filter */
+WHERE     	CONVERT_TZ(o.created_at,'UTC','America/New_York') &gt;= '2017-01-03'
+AND  		(f.severity !=9 or f.severity is null)
+AND			o.status != 'canceled'
+GROUP BY  	DATE</string>
+		<string>SELECT    SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+          SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as 'Grommet Name',
+          DATE(t.launch_date) as launch,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_media_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.terms_retail_media_allowance &gt; 0 THEN 'Yes' ELSE 'No' END as media_allowance,
+          IF(cpf.shipwire_vendor_id = 666, 'Inv','Drop') as fulfillment_type,
+          CASE WHEN cpf.shipwire_vendor_id = 666 AND ps.terms_return_discount_allowance &gt; 0 THEN 'Yes' WHEN cpf.shipwire_vendor_id != 666 AND sv.return_defectives &gt; 0 THEN 'Yes' ELSE 'No' END as defective_returns
+FROM      catalog_product_flat_1 cpf/* product info*/
+LEFT JOIN  (SELECT * FROM purchasing_case_link GROUP BY product_id) pcl ON pcl.product_id = cpf.entity_id /* purchasing sku*/
+LEFT JOIN  purchasing_case pc ON pc.case_id = pcl.case_id /* Case link */
+LEFT JOIN  purchasing_supplier ps ON ps.supplier_id = pc.supplier_id /* Supplier Info */
+LEFT JOIN  shipwire_vendor sv ON sv.vendor_id = cpf.shipwire_vendor_id /* Dropship Vendors*/
+LEFT JOIN  catalog_product_entity_int cp_st ON cp_st.entity_id = cpf.entity_id AND cp_st.attribute_id = 84 AND cp_st.store_id = 0 /* status */
+LEFT JOIN   (SELECT      SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           WHERE    cpf.type_id = 'grouped'
+           GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       cp_st.value = 1 /* 1 is enabled, 2 is disabled */
+AND       t.launch_date IS NOT NULL /* launch date from subquery */
+Group BY  sku_prefix
+ORDER BY  launch</string>
+		<string># BI-500 - RJ Consumer Customers by Week #
+SELECT  DATE_FORMAT(so.created_at, '%Y-%V') as year_week,
+		YEAR(so.created_at) as year,
+		WEEK(so.created_at) as week,
+		DATE(MIN(so.created_at)) as week_start,
+        COUNT(DISTINCT t.wholesale_retailer_id) as new_count,
+        COUNT(DISTINCT so.wholesale_retailer_id) - COUNT(DISTINCT t.wholesale_retailer_id) as existing_count,
+        COUNT(DISTINCT so.wholesale_retailer_id) as total_count,
+        COUNT(DISTINCT t.wholesale_retailer_id)/COUNT(DISTINCT so.wholesale_retailer_id) as percent_new
+FROM 	sales_flat_order so
+JOIN		(SELECT 	DATE_FORMAT(MIN(created_at), '%Y-%V') as cohort_start,
+             	customer_email,
+             	wholesale_retailer_id
+        FROM 	sales_flat_order
+       	WHERE 	status != 'canceled'
+        AND 	store_id = 3
+        AND	customer_group_id != 4
+		GROUP BY 		wholesale_retailer_id) t ON	t.cohort_start = DATE_FORMAT(so.created_at, '%Y-%V')	
+WHERE		so.store_id = 3
+AND			so.customer_group_id != 4
+AND			so.status != 'canceled'
+GROUP BY 	year_week
+ORDER BY	week_start ASC</string>
+		<string>SELECT		group_sku_prefix,
+			company_name,
+			created_by_user_name,
+			CASE WHEN pricing_addendum_status = 1 THEN "accepted" WHEN pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM		onboarding_maker</string>
+		<string>SELECT		group_sku_prefix,
+			company_name,
+			created_by_user_name,
+			CASE WHEN om.pricing_addendum_status = 1 THEN "accepted" WHEN om.pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM		onboarding_maker</string>
+		<string>SELECT		om.group_sku_prefix,
+			company_name,
+			created_by_user_name,
+			CASE WHEN om.pricing_addendum_status = 1 THEN "accepted" WHEN om.pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM		onboarding_maker</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+	      om.created_by_user_name,
+          DATE(t.launch_date) AS launch_date,
+          CASE WHEN om.pricing_addendum_status = 1 THEN "accepted" WHEN om.pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)
+ORDER BY  launch_date ASC</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS launch_date,
+          CASE WHEN om.pricing_addendum_status = 1 THEN "accepted" WHEN om.pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)
+ORDER BY  launch_date ASC</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS launch_date,
+          CASE WHEN om.pricing_addendum_status = 1 THEN "accepted" AND CASE WHEN om.pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)
+ORDER BY  launch_date ASC</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS launch_date,
+          CASE WHEN om.pricing_addendum_status = 1 THEN "accepted" CASE WHEN om.pricing_addendum_status = 2 THEN "rejected" ELSE "none" END as pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)
+ORDER BY  launch_date ASC</string>
+		<string>CREATE PROCEDURE daily_top_10_consumer_products()
+BEGIN
+
+SET @rownum = 0;
+
+#3 Replace data into daily_top_10_consumer_products
+REPLACE INTO 	daily_top_10_consumer_products(
+				date,
+				name,
+				revenue,
+				refreshed_at)
+
+SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue,
+				NOW() as refreshed_at
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 1
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p 
+ORDER BY 		date DESC
+;
+END</string>
+		<string>DROP PROCEDURE if exists daily_top_10_consumer_products</string>
+		<string>REPLACE INTO 	daily_top_10_consumer_products(
+				date,
+				name,
+				revenue,
+				refreshed_at)
+
+SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue,
+				NOW() as refreshed_at
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 1
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p 
+ORDER BY 		date DESC</string>
+		<string>#2 Create Table
+CREATE TABLE IF NOT EXISTS daily_top_10_consumer_products (
+			date DATE NOT NULL,
+			name VARCHAR (128) NOT NULL,
+			revenue DECIMAL (12,2),
+			refreshed_at TIMESTAMP NOT NULL,
+			unique Key uk_date_name(date, name)
+			)</string>
+		<string>a</string>
+		<string>#1 Drop Table
+drop table daily_top_10_consumer_products</string>
+		<string>SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue,
+				NOW() as refreshed_at
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 1
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p 
+ORDER BY 		date DESC</string>
+		<string>CREATE PROCEDURE daily_top_10_wholesale_products()
+BEGIN
+
+#3 Replace data into daily_top_10_wholesale_products
+REPLACE INTO 	daily_top_10_wholesale_products(
+				date,
+				name,
+				revenue)
+
+SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 3
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p
+ORDER BY 		revenue DESC
+;
+END</string>
+		<string>DROP PROCEDURE if exists daily_top_10_wholesale_products</string>
+		<string>REPLACE INTO 	daily_top_10_wholesale_products(
+				date,
+				name,
+				revenue)
+
+SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 3
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p
+ORDER BY 		revenue DESC</string>
+		<string>SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 3
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p
+ORDER BY 		revenue DESC</string>
+		<string>SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 3
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p
+ORDER BY 		revenue ASC</string>
+		<string>REPLACE INTO 	daily_top_10_wholesale_products(
+				date,
+				name,
+				revenue)
+
+SELECT			p.date,
+				p.name,
+				ROUND(p.revenue,2) as revenue
+FROM
+				(SELECT 	soia.period as date,
+       						SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) as name,
+       						sum(cpf.price * soia.qty) as revenue
+				FROM   		magento.sales_order_item_aggregated soia
+				JOIN      	magento.catalog_product_flat_3 cpf ON cpf.entity_id = soia.product_id /* product info*/
+				WHERE  		soia.period = CURDATE() - 1
+				AND    		soia.store_id = 3
+				AND     	cpf.type_id = 'simple'
+				GROUP BY 	name
+				ORDER BY	revenue DESC
+				LIMIT		10) p
+ORDER BY 		revenue ASC</string>
+		<string>#2 Create Table
+CREATE TABLE IF NOT EXISTS daily_top_10_wholesale_products (
+			date DATE NOT NULL,
+			name VARCHAR (128) NOT NULL,
+			revenue DECIMAL (12,0),
+			unique Key uk_date_name(date, name)
+			)</string>
+		<string>#1 Drop Table
+drop table daily_top_10_wholesale_products</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS launch_date,
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)
+ORDER BY  launch_date ASC</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)
+ORDER BY  launch_date ASC</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = sku_prefix = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1)</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker om ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = sku_prefix = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  sku_prefix</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) = sku_prefix = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  sku_prefix</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf 
+LEFT JOIN onboarding_maker ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  sku_prefix</string>
+		<string>SELECT    SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix,
+	      SUBSTRING(cpf.name, 1 , LOCATE(':',cpf.name) - 1) AS grom_prefix,
+          DATE(t.launch_date) AS 'Launch Date',
+          om.pricing_addendum_status
+FROM      catalog_product_flat_1 cpf ON cpf.entity_id = soia.product_id /* product info*/
+LEFT JOIN onboarding_maker ON SUBSTRING(cpf.sku, 1 , LOCATE('-',cpf.sku) - 1) AS sku_prefix = om.group_sku_prefix
+LEFT JOIN   (SELECT     SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1) as sku_prefix,
+                    	SUBSTRING(cpf.name,1,LOCATE(':',cpf.name)-1) AS grom_prefix,
+                    	CASE WHEN DATE(min(cpf.news_from_date)) IS NULL THEN date(cpf.launch_date) ELSE DATE(min(cpf.news_from_date)) END AS launch_date           FROM     catalog_product_flat_1 cpf
+           	WHERE    cpf.type_id = 'grouped'
+            GROUP BY sku_prefix) t ON t.sku_prefix = SUBSTRING(cpf.sku,1,LOCATE('-', cpf.sku)-1)  /* Original Launch Date w/o updates */
+WHERE     cpf.type_id = 'simple'
+AND       t.launch_date IS NOT NULL
+GROUP BY  sku_prefix</string>
+	</array>
+	<key>rdbms_type</key>
+	<string>mysql</string>
+	<key>rdbms_version</key>
+	<string>5.5.5-10.2.11-MariaDB</string>
+	<key>version</key>
+	<integer>1</integer>
+</dict>
+</plist>
